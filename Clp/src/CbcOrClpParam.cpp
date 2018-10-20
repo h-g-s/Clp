@@ -3106,7 +3106,7 @@ Setting this option to on keeps original names in variables which still exist in
 
     {
         CbcOrClpParam p("outDup!licates", "takes duplicate rows etc out of integer model",
-                        CLP_PARAM_ACTION_OUTDUPROWS, 7, 0);
+                       CLP_PARAM_ACTION_OUTDUPROWS, 7, 0);
         parameters.push_back( p );
     }
 #endif
