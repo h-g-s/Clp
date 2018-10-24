@@ -1728,6 +1728,66 @@ possibilities." );
         parameters.push_back( p );
     }
 #ifdef COIN_HAS_CBC
+    /*----------SAMUEL_BRITO----------*/
+    {
+      CbcOrClpParam p("aggrclique!Cuts", "Whether to use Aggressive Clique cuts",
+                        "off", CBC_PARAM_STR_AGGRCLIQUECUTS);
+      p.append("on");
+      p.append("root");
+      p.append("ifmove");
+      p.append("forceOn");
+      p.append("onglobal");
+      p.setLonghelp("This switches on aggressive clique cuts (either at root or in entire tree) \
+                      See branchAndCut for information on options.");
+     parameters.push_back(p);
+    }
+    {
+      CbcOrClpParam p("usroddhole!Cuts", "Whether to use User Odd Hole cuts",
+                        "off", CBC_PARAM_STR_USRODDHOLECUTS);
+      p.append("on");
+      p.append("root");
+      p.append("ifmove");
+      p.append("forceOn");
+      p.append("onglobal");
+      p.setLonghelp("This switches on user odd hole cuts (either at root or in entire tree) \
+                    See branchAndCut for information on options.");
+      parameters.push_back(p);
+    }
+    {
+      CbcOrClpParam p("extknapsack!Cuts", "Whether to use Extended Knapsack cuts",
+                        "off", CBC_PARAM_STR_EXTKNAPSACKCUTS);
+      p.append("on");
+      p.append("root");
+      p.append("ifmove");
+      p.append("forceOn");
+      p.append("onglobal");
+      p.append("forceandglobal");
+      p.setLonghelp("This switches on extended knapsack cuts (either at root or in entire tree) \
+                    See branchAndCut for information on options.");
+     parameters.push_back(p);
+    }
+    {
+      CbcOrClpParam p("maxitbk", "Maximum number of iterations of Bron-Kerbosch \
+                        algorithm in Aggressive Clique Separation routine",
+                          1, 2147483647, CBC_PARAM_INT_MAXITBK);
+      parameters.push_back(p);
+    }
+    {
+      CbcOrClpParam p("maxitbkext!ension", "Maximum number of iterations of Bron-Kerbosch \
+                        algorithm in extension module of Aggressive Clique Separation routine",
+                          1, 2147483647, CBC_PARAM_INT_MAXITBKEXT);
+      parameters.push_back(p);
+    }
+    {
+      CbcOrClpParam p("clqext!method", "Maximum number of iterations of Bron-Kerbosch \
+                        algorithm in Aggressive Clique Separation routine",
+                          0, 4, CBC_PARAM_INT_CLQEXTMETHOD);
+      p.setLonghelp("Sets the method used in the extension module \
+          of Aggressive Clique Separation routine. 0=no extension; 1=random extension; \
+          2=max degree extension; 3=greedy extension; 4=exact extension.");
+      parameters.push_back(p);
+    }
+    /*----------------------------------------*/
     {
         CbcOrClpParam p("clique!Cuts", "Whether to use Clique cuts",
                         "off", CBC_PARAM_STR_CLIQUECUTS);
