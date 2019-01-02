@@ -3154,10 +3154,19 @@ This is a first try and will hopefully become more sophisticated." );
     {
         CbcOrClpParam p("Orbit!alBranching", "Whether to try orbital branching",
                         "off", CBC_PARAM_STR_ORBITAL);
+<<<<<<< HEAD
         p.append("on");
         p.append("strong");
         p.append("force");
         p.setLonghelp(
+=======
+     parameters[numberParameters-1].append("on");
+     parameters[numberParameters-1].append("strong");
+     parameters[numberParameters-1].append("force");
+     parameters[numberParameters-1].append("simple");
+     parameters[numberParameters-1].setLonghelp
+     (
+>>>>>>> 95a1325ab4c4a113705e5755d001a9f3d9bcc7fc
           "This switches on Orbital branching. \
 On just adds orbital, strong tries extra fixing in strong branching");
         parameters.push_back( p );
@@ -3349,6 +3358,7 @@ to write the original to file using 'file'." );
     {
         CbcOrClpParam p("preprocess", "Whether to use integer preprocessing",
                         "off", CBC_PARAM_STR_PREPROCESS);
+<<<<<<< HEAD
 
         p.append("on");
         p.append("save");
@@ -3360,6 +3370,20 @@ to write the original to file using 'file'." );
         p.append("aggregate");
         p.append("forcesos");
         p.setLonghelp(
+=======
+     parameters[numberParameters-1].append("on");
+     parameters[numberParameters-1].append("save");
+     parameters[numberParameters-1].append("equal");
+     parameters[numberParameters-1].append("sos");
+     parameters[numberParameters-1].append("trysos");
+     parameters[numberParameters-1].append("equalall");
+     parameters[numberParameters-1].append("strategy");
+     parameters[numberParameters-1].append("aggregate");
+     parameters[numberParameters-1].append("forcesos");
+     parameters[numberParameters-1].append("stop!aftersaving");
+     parameters[numberParameters-1].setLonghelp
+     (
+>>>>>>> 95a1325ab4c4a113705e5755d001a9f3d9bcc7fc
           "This tries to reduce size of model in a similar way to presolve and \
 it also tries to strengthen the model - this can be very useful and is worth trying. \
  Save option saves on file presolved.mps.  equal will turn <= cliques into \
@@ -3900,21 +3924,49 @@ sequential Lps to get a good approximate solution." );
                         CBC_PARAM_ACTION_BAB);
          p.setLonghelp(
           "If there are no integer variables then this just solves LP.  If there are integer variables \
+<<<<<<< HEAD
 this does branch and cut." );
          parameters.push_back( p );
      }
      {
          CbcOrClpParam p("sos!Options", "Whether to use SOS from AMPL",
+=======
+this does branch and cut."
+     );
+     parameters[numberParameters++] =
+          CbcOrClpParam("sosO!ptions", "Whether to use SOS from AMPL",
+>>>>>>> 95a1325ab4c4a113705e5755d001a9f3d9bcc7fc
                         "off", CBC_PARAM_STR_SOS);
          p.append("on");
          p.setCurrentOption("on");
          p.setLonghelp(
           "Normally if AMPL says there are SOS variables they should be used, but sometime sthey should\
+<<<<<<< HEAD
  be turned off - this does so." );
          parameters.push_back( p );
      }
      {
          CbcOrClpParam p("slog!Level", "Level of detail in (LP) Solver output",
+=======
+ be turned off - this does so."
+     );
+     // Due to James Howey
+     parameters[numberParameters++] =
+          CbcOrClpParam("sosP!rioritize", "How to deal with SOS priorities",
+                        "off", CBC_PARAM_STR_SOSPRIORITIZE);
+     parameters[numberParameters-1].append("high");
+     parameters[numberParameters-1].append("low");
+     parameters[numberParameters-1].append("orderhigh");
+     parameters[numberParameters-1].append("orderlow");
+     parameters[numberParameters-1].setLonghelp
+     (
+          "This sets priorities for SOS.  The first two just set priority \
+relative to integers.  Orderhigh gives first set highest priority and integers \
+a low priority.  Orderlow gives integers high priority then SOS in order."
+     );
+     parameters[numberParameters++] =
+          CbcOrClpParam("slog!Level", "Level of detail in (LP) Solver output",
+>>>>>>> 95a1325ab4c4a113705e5755d001a9f3d9bcc7fc
                         -1, 63, CLP_PARAM_INT_SOLVERLOGLEVEL);
          p.setLonghelp(
           "If 0 then there should be no output in normal circumstances.  1 is probably the best\
