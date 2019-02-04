@@ -10,4 +10,3 @@
 #include "CoinAbcBaseFactorization.hpp"
 #include "CoinAbcBaseFactorization5.cpp"
 #endif
-
