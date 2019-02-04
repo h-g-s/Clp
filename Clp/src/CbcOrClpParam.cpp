@@ -1201,13 +1201,19 @@ static char line[1000];
 static char *where = NULL;
 extern int CbcOrClpRead_mode;
 int CbcOrClpEnvironmentIndex = -1;
+// Alternative to environment
+char *alternativeEnvironment = NULL;
 static size_t fillEnv()
 {
 #if defined(_MSC_VER) || defined(__MSVCRT__)
   return 0;
 #else
   // Don't think it will work on Windows
-  char *environ = getenv("CBC_CLP_ENVIRONMENT");
+  char *environ;
+  if (!alternativeEnvironment)
+    environ = getenv("CBC_CLP_ENVIRONMENT");
+  else
+    environ = alternativeEnvironment;
   size_t length = 0;
   if (environ) {
     length = strlen(environ);
@@ -1235,8 +1241,13 @@ static size_t fillEnv()
       length = 0;
     }
   }
-  if (!length)
+  if (!length) {
     CbcOrClpEnvironmentIndex = -1;
+    if (alternativeEnvironment) {
+      delete[] alternativeEnvironment;
+      alternativeEnvironment = NULL;
+    }
+  }
   return length;
 #endif
 }
@@ -2523,6 +2534,13 @@ name.  This is initialized to 'stdout' (this defaults to ordinary solution if st
 If problem created from gmpl model - will do any reports.");
     parameters.push_back(p);
   }
+  {
+    CbcOrClpParam p("guess", "Guesses at good parameters", CLP_PARAM_ACTION_GUESS, 7);
+    p.setLonghelp(
+    "This looks at model statistics and does an initial solve \
+setting some parameters which may help you to think of possibilities.");
+    parameters.push_back(p);
+  }
 #ifdef COIN_HAS_CBC
   {
     CbcOrClpParam p("heur!isticsOnOff", "Switches most heuristics on or off",
@@ -3112,18 +3130,11 @@ This is a first try and will hopefully become more sophisticated.");
   {
     CbcOrClpParam p("Orbit!alBranching", "Whether to try orbital branching",
       "off", CBC_PARAM_STR_ORBITAL);
-<<<<<<< HEAD
     p.append("on");
     p.append("strong");
     p.append("force");
+    p.append("simple");
     p.setLonghelp(
-=======
-    parameters[numberParameters - 1].append("on");
-    parameters[numberParameters - 1].append("strong");
-    parameters[numberParameters - 1].append("force");
-    parameters[numberParameters - 1].append("simple");
-    parameters[numberParameters - 1].setLonghelp(
->>>>>>> 95a1325ab4c4a113705e5755d001a9f3d9bcc7fc
       "This switches on Orbital branching. \
 On just adds orbital, strong tries extra fixing in strong branching");
     parameters.push_back(p);
@@ -3314,7 +3325,6 @@ to write the original to file using 'file'.");
   {
     CbcOrClpParam p("preprocess", "Whether to use integer preprocessing",
       "off", CBC_PARAM_STR_PREPROCESS);
-<<<<<<< HEAD
 
     p.append("on");
     p.append("save");
@@ -3325,20 +3335,8 @@ to write the original to file using 'file'.");
     p.append("strategy");
     p.append("aggregate");
     p.append("forcesos");
+    p.append("stop!aftersaving");
     p.setLonghelp(
-=======
-    parameters[numberParameters - 1].append("on");
-    parameters[numberParameters - 1].append("save");
-    parameters[numberParameters - 1].append("equal");
-    parameters[numberParameters - 1].append("sos");
-    parameters[numberParameters - 1].append("trysos");
-    parameters[numberParameters - 1].append("equalall");
-    parameters[numberParameters - 1].append("strategy");
-    parameters[numberParameters - 1].append("aggregate");
-    parameters[numberParameters - 1].append("forcesos");
-    parameters[numberParameters - 1].append("stop!aftersaving");
-    parameters[numberParameters - 1].setLonghelp(
->>>>>>> 95a1325ab4c4a113705e5755d001a9f3d9bcc7fc
       "This tries to reduce size of model in a similar way to presolve and \
 it also tries to strengthen the model - this can be very useful and is worth trying. \
  Save option saves on file presolved.mps.  equal will turn <= cliques into \
@@ -3879,48 +3877,37 @@ sequential Lps to get a good approximate solution.");
       CBC_PARAM_ACTION_BAB);
          p.setLonghelp(
           "If there are no integer variables then this just solves LP.  If there are integer variables \
-<<<<<<< HEAD
 this does branch and cut." );
          parameters.push_back( p );
   }
   {
-    CbcOrClpParam p("sos!Options", "Whether to use SOS from AMPL",
-=======
-this does branch and cut."
-     );
-parameters[numberParameters++] = CbcOrClpParam("sosO!ptions", "Whether to use SOS from AMPL",
->>>>>>> 95a1325ab4c4a113705e5755d001a9f3d9bcc7fc
-      "off", CBC_PARAM_STR_SOS);
+    CbcOrClpParam p("sosO!ptions", "Whether to use SOS from AMPL",  "off", CBC_PARAM_STR_SOS);
     p.append("on");
     p.setCurrentOption("on");
          p.setLonghelp(
           "Normally if AMPL says there are SOS variables they should be used, but sometime sthey should\
-<<<<<<< HEAD
  be turned off - this does so." );
          parameters.push_back( p );
   }
   {
-    CbcOrClpParam p("slog!Level", "Level of detail in (LP) Solver output",
-=======
- be turned off - this does so."
-     );
- // Due to James Howey
- parameters[numberParameters++] = CbcOrClpParam("sosP!rioritize", "How to deal with SOS priorities",
-   "off", CBC_PARAM_STR_SOSPRIORITIZE);
- parameters[numberParameters - 1].append("high");
- parameters[numberParameters - 1].append("low");
- parameters[numberParameters - 1].append("orderhigh");
- parameters[numberParameters - 1].append("orderlow");
- parameters[numberParameters - 1].setLonghelp(
-   "This sets priorities for SOS.  The first two just set priority \
-relative to integers.  Orderhigh gives first set highest priority and integers \
-a low priority.  Orderlow gives integers high priority then SOS in order.");
- parameters[numberParameters++] = CbcOrClpParam("slog!Level", "Level of detail in (LP) Solver output",
->>>>>>> 95a1325ab4c4a113705e5755d001a9f3d9bcc7fc
-      -1, 63, CLP_PARAM_INT_SOLVERLOGLEVEL);
+    CbcOrClpParam p("slog!Level", "Level of detail in (LP) Solver output", -1, 63, CLP_PARAM_INT_SOLVERLOGLEVEL);
     p.setLonghelp(
       "If 0 then there should be no output in normal circumstances.  1 is probably the best\
  value for most uses, while 2 and 3 give more information.  This parameter is only used inside MIP - for Clp use 'log'");
+    parameters.push_back(p);
+  }
+  {
+     // Due to James Howey
+     CbcOrClpParam p("sosP!rioritize", "How to deal with SOS priorities",
+       "off", CBC_PARAM_STR_SOSPRIORITIZE);
+     p.append("high");
+     p.append("low");
+     p.append("orderhigh");
+     p.append("orderlow");
+     p.setLonghelp(
+       "This sets priorities for SOS.  The first two just set priority \
+    relative to integers.  Orderhigh gives first set highest priority and integers \
+    a low priority.  Orderlow gives integers high priority then SOS in order.");
     parameters.push_back(p);
   }
 #else
