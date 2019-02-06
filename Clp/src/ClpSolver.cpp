@@ -136,6 +136,8 @@ static void generateCode(const char *fileName, int type);
 // Returns next valid field
 int CbcOrClpRead_mode = 1;
 FILE *CbcOrClpReadCommand = stdin;
+// Alternative to environment
+extern char *alternativeEnvironment;
 extern int CbcOrClpEnvironmentIndex;
 #ifdef CLP_USER_DRIVEN1
 /* Returns true if variable sequenceOut can leave basis when
@@ -1437,7 +1439,7 @@ int ClpMain1(int argc, const char *argv[], AbcSimplex *models)
             {
               const char *c_name = field.c_str();
               size_t length = strlen(c_name);
-              if (length > 3 && !strncmp(c_name + length - 3, ".lp", 3))
+              if ((length > 3 && !strncmp(c_name + length - 3, ".lp", 3)) || (length > 6 && !strncmp(c_name + length - 6, ".lp.gz", 6)) || (length > 7 && !strncmp(c_name + length - 7, ".lp.bz2", 7)))
                 gmpl = -1; // .lp
             }
             bool absolutePath;
@@ -2884,6 +2886,19 @@ clp watson.mps -\nscaling off\nprimalsimplex");
           break;
         case CLP_PARAM_ACTION_ENVIRONMENT:
           CbcOrClpEnvironmentIndex = 0;
+          break;
+        case CLP_PARAM_ACTION_GUESS:
+          if (goodModels[iModel]) {
+            delete[] alternativeEnvironment;
+            ClpSimplexOther *model2 = static_cast< ClpSimplexOther * >(models + iModel);
+            alternativeEnvironment = model2->guess(0);
+            if (alternativeEnvironment)
+              CbcOrClpEnvironmentIndex = 0;
+            else
+              std::cout << "** Guess unable to generate commands" << std::endl;
+          } else {
+            std::cout << "** Guess needs a valid model" << std::endl;
+          }
           break;
         default:
           abort();
@@ -4502,3 +4517,6 @@ static void generateCode(const char *fileName, int type)
   fclose(fp);
   printf("C++ file written to %s\n", fileName);
 }
+
+/* vi: softtabstop=2 shiftwidth=2 expandtab tabstop=2
+*/

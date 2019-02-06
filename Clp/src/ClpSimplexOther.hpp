@@ -271,6 +271,12 @@ public:
   int expandKnapsack(int knapsackRow, int &numberOutput,
     double *buildObj, CoinBigIndex *buildStart,
     int *buildRow, double *buildElement, int reConstruct = -1) const;
+  /// Create a string of commands to guess at best strategy for model
+  /// At present mode is ignored
+  char *guess(int mode) const;
   //@}
 };
 #endif
+
+/* vi: softtabstop=2 shiftwidth=2 expandtab tabstop=2
+*/
