@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: AbcDualRowSteepest.hpp 2385 2019-01-06 19:43:06Z unxusr $ */
 // Copyright (C) 2002, International Business Machines
 // Corporation and others, Copyright (C) 2012, FasterCoin.  All Rights Reserved.
 // This code is licensed under the terms of the Eclipse Public License (EPL).
@@ -162,3 +162,6 @@ private:
 #define DEVEX_TRY_NORM 1.0e-8
 #define DEVEX_ADD_ONE 1.0
 #endif
+
+/* vi: softtabstop=2 shiftwidth=2 expandtab tabstop=2
+*/

@@ -302,3 +302,6 @@ void ClpPEDualRowDantzig::saveWeights(ClpSimplex *model, int mode)
   }
   ClpDualRowDantzig::saveWeights(model, mode);
 }
+
+/* vi: softtabstop=2 shiftwidth=2 expandtab tabstop=2
+*/

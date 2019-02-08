@@ -606,3 +606,6 @@ void ClpPEPrimalColumnSteepest::updateWeights(CoinIndexedVector *input)
   //}
   ClpPrimalColumnSteepest::updateWeights(input);
 }
+
+/* vi: softtabstop=2 shiftwidth=2 expandtab tabstop=2
+*/

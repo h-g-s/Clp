@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: ClpModel.cpp 2385 2019-01-06 19:43:06Z unxusr $ */
 // copyright (C) 2002, International Business Machines
 // Corporation and others.  All Rights Reserved.
 // This code is licensed under the terms of the Eclipse Public License (EPL).
@@ -4532,3 +4532,6 @@ void ClpModel::generateCpp(FILE *fp)
   fprintf(fp, "%d  clpModel->setLogLevel(%d);\n", iValue1 == iValue2 ? 4 : 3, iValue1);
   fprintf(fp, "%d  clpModel->setLogLevel(save_logLevel);\n", iValue1 == iValue2 ? 7 : 6);
 }
+
+/* vi: softtabstop=2 shiftwidth=2 expandtab tabstop=2
+*/

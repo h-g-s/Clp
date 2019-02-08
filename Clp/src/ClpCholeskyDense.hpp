@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: ClpCholeskyDense.hpp 2385 2019-01-06 19:43:06Z unxusr $ */
 /*
   Copyright (C) 2003, International Business Machines Corporation
   and others.  All Rights Reserved.
@@ -152,3 +152,6 @@ void ClpCholeskyCrecRecLeaf(/*ClpCholeskyDenseC * thisStruct, */
   const longDouble *COIN_RESTRICT work,
   int nUnder);
 #endif
+
+/* vi: softtabstop=2 shiftwidth=2 expandtab tabstop=2
+*/

@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: CoinAbcCommonFactorization.hpp 2385 2019-01-06 19:43:06Z unxusr $ */
 // Copyright (C) 2000, International Business Machines
 // Corporation and others, Copyright (C) 2012, FasterCoin.  All Rights Reserved.
 // This code is licensed under the terms of the Eclipse Public License (EPL).
@@ -91,3 +91,6 @@ int CoinAbcDgetrf(int m, int n, long double *a, int lda, int *ipiv
 #define BLOCKING8 8
 #define BLOCKING8X8 BLOCKING8 *BLOCKING8
 #endif
+
+/* vi: softtabstop=2 shiftwidth=2 expandtab tabstop=2
+*/

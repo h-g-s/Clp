@@ -381,3 +381,6 @@ void ClpPEPrimalColumnDantzig::saveWeights(ClpSimplex *model, int mode)
   }
   ClpPrimalColumnDantzig::saveWeights(model, mode);
 }
+
+/* vi: softtabstop=2 shiftwidth=2 expandtab tabstop=2
+*/

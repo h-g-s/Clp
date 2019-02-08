@@ -488,3 +488,6 @@ void ClpPEDualRowSteepest::updatePrimalSolution(CoinIndexedVector *input,
     modelPE_->updateCompatibleRows(iColumn);
   ClpDualRowSteepest::updatePrimalSolution(input, theta, changeInObjective);
 }
+
+/* vi: softtabstop=2 shiftwidth=2 expandtab tabstop=2
+*/

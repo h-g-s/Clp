@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: ClpSolve.cpp 2385 2019-01-06 19:43:06Z unxusr $ */
 // Copyright (C) 2003, International Business Machines
 // Corporation and others.  All Rights Reserved.
 // This code is licensed under the terms of the Eclipse Public License (EPL).
@@ -7984,3 +7984,6 @@ int ClpSimplex::solveBenders(CoinStructuredModel *model, ClpSolve &options)
   delete[] sub;
   return 0;
 }
+
+/* vi: softtabstop=2 shiftwidth=2 expandtab tabstop=2
+*/

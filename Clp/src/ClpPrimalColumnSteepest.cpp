@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: ClpPrimalColumnSteepest.cpp 2385 2019-01-06 19:43:06Z unxusr $ */
 // Copyright (C) 2002, International Business Machines
 // Corporation and others.  All Rights Reserved.
 // This code is licensed under the terms of the Eclipse Public License (EPL).
@@ -4455,3 +4455,6 @@ int ClpPrimalColumnSteepest::partialPricing(CoinIndexedVector *updates,
 #endif
   return bestSequence;
 }
+
+/* vi: softtabstop=2 shiftwidth=2 expandtab tabstop=2
+*/

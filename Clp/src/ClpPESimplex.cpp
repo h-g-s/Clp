@@ -751,3 +751,6 @@ void ClpPESimplex::printTimer(std::ostream &out)
 {
   out << "Cpu in compatibility: " << timeCompatibility_ << " s" << std::endl;
 }
+
+/* vi: softtabstop=2 shiftwidth=2 expandtab tabstop=2
+*/

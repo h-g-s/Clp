@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: ClpDynamicExampleMatrix.cpp 2385 2019-01-06 19:43:06Z unxusr $ */
 // Copyright (C) 2004, International Business Machines
 // Corporation and others.  All Rights Reserved.
 // This code is licensed under the terms of the Eclipse Public License (EPL).
@@ -680,3 +680,6 @@ void ClpDynamicExampleMatrix::packDown(const int *in, int numberToPack)
   }
   assert(put == numberGubColumns_);
 }
+
+/* vi: softtabstop=2 shiftwidth=2 expandtab tabstop=2
+*/

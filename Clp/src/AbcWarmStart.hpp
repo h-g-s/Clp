@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: AbcWarmStart.hpp 2385 2019-01-06 19:43:06Z unxusr $ */
 /*! \legal
   Copyright (C) 2002, International Business Machines
   Corporation and others, Copyright (C) 2012, FasterCoin.  All Rights Reserved.
@@ -241,3 +241,6 @@ protected:
   //@}
 };
 #endif
+
+/* vi: softtabstop=2 shiftwidth=2 expandtab tabstop=2
+*/

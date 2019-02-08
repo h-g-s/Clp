@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: ClpSimplex.cpp 2385 2019-01-06 19:43:06Z unxusr $ */
 // Copyright (C) 2002, International Business Machines
 // Corporation and others.  All Rights Reserved.
 // This code is licensed under the terms of the Eclipse Public License (EPL).
@@ -1919,10 +1919,10 @@ int ClpSimplex::internalFactorize(int solveType)
   //         solution_[iRow],iRow,status_[iRow]);
   //}
   //}
-#if 0 //ndef _MSC_VER
-	 // The local static var k is a problem when trying to build a DLL. Since this is
-	 // just for debugging (likely done on *nix), just hide it from Windows
-	 // -- lh, 101016 --
+#if 0 //ndef _MSC_VER                                                              \
+  // The local static var k is a problem when trying to build a DLL. Since this is \
+  // just for debugging (likely done on *nix), just hide it from Windows           \
+  // -- lh, 101016 --
      if (0)  {
           static int k = 0;
           printf("start basis\n");
@@ -7628,8 +7628,9 @@ int ClpSimplex::readLp(const char *filename, const double epsilon)
     return (1);
   }
   CoinLpIO m;
-  m.readLp(fp, epsilon);
+  m.setEpsilon(epsilon);
   fclose(fp);
+  m.readLp(filename);
 
   // set problem name
   setStrParam(ClpProbName, m.getProblemName());
@@ -12633,3 +12634,6 @@ void ClpSimplex::copyEnabledStuff(const ClpSimplex *rhs)
   if (rhs->primalColumnPivot_)
     primalColumnPivot_ = rhs->primalColumnPivot_->clone();
 }
+
+/* vi: softtabstop=2 shiftwidth=2 expandtab tabstop=2
+*/

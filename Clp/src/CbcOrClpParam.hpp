@@ -561,3 +561,6 @@ int whichParam(const CbcOrClpParameterType &name,
 void saveSolution(const ClpSimplex *lpSolver, std::string fileName);
 void restoreSolution(ClpSimplex *lpSolver, std::string fileName, int mode);
 #endif /* CbcOrClpParam_H */
+
+/* vi: softtabstop=2 shiftwidth=2 expandtab tabstop=2
+*/

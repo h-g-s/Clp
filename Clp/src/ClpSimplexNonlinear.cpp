@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: ClpSimplexNonlinear.cpp 2385 2019-01-06 19:43:06Z unxusr $ */
 // Copyright (C) 2004, International Business Machines
 // Corporation and others.  All Rights Reserved.
 // This code is licensed under the terms of the Eclipse Public License (EPL).
@@ -4416,3 +4416,6 @@ int ClpSimplexNonlinear::primalSLP(int numberConstraints, ClpConstraint **constr
   matrix_->times(1.0, columnActivity_, rowActivity_);
   return 0;
 }
+
+/* vi: softtabstop=2 shiftwidth=2 expandtab tabstop=2
+*/

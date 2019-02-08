@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: ClpPdco.cpp 2385 2019-01-06 19:43:06Z unxusr $ */
 // Copyright (C) 2003, International Business Machines
 // Corporation and others.  All Rights Reserved.
 // This code is licensed under the terms of the Eclipse Public License (EPL).
@@ -1005,3 +1005,6 @@ void ClpPdco::getHessian(CoinDenseVector< double > &x, CoinDenseVector< double >
 {
   pdcoStuff_->getHessian(this, x, H);
 }
+
+/* vi: softtabstop=2 shiftwidth=2 expandtab tabstop=2
+*/

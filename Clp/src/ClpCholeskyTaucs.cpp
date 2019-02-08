@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: ClpCholeskyTaucs.cpp 2385 2019-01-06 19:43:06Z unxusr $ */
 #ifdef TAUCS_BARRIER
 // Copyright (C) 2004, International Business Machines
 // Corporation and others.  All Rights Reserved.
@@ -403,3 +403,6 @@ void ClpCholeskyTaucs::solve(double *region)
   delete[] in;
 }
 #endif
+
+/* vi: softtabstop=2 shiftwidth=2 expandtab tabstop=2
+*/
