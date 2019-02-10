@@ -303,7 +303,6 @@ enum CbcOrClpParameterType
 
   CBC_PARAM_NOTUSED_INVALID = 1000
 };
-
 #include <vector>
 #include <string>
 

@@ -2331,13 +2331,13 @@ It can be useful to get rid of the original names and go over to using Rnnnnnnn 
   }
   {
     CbcOrClpParam p("extra2", "Extra integer parameter 2",
-      -COIN_INT_MAX, COIN_INT_MAX, CBC_PARAM_INT_EXTRA2, 0);
+      -100, COIN_INT_MAX, CBC_PARAM_INT_EXTRA2, 0);
     p.setIntValue(-1);
     parameters.push_back(p);
   }
   {
     CbcOrClpParam p("extra3", "Extra integer parameter 3",
-      -COIN_INT_MAX, COIN_INT_MAX, CBC_PARAM_INT_EXTRA3, 0);
+      -1, COIN_INT_MAX, CBC_PARAM_INT_EXTRA3, 0);
     p.setIntValue(-1);
     parameters.push_back(p);
   }
@@ -2885,6 +2885,7 @@ You can also use the parameters 'direction minimize'.");
   {
     CbcOrClpParam p("mipO!ptions", "Dubious options for mip",
       0, COIN_INT_MAX, CBC_PARAM_INT_MIPOPTIONS, 0);
+    p.setIntValue(1057);
     parameters.push_back(p);
   }
   {
@@ -3875,19 +3876,19 @@ sequential Lps to get a good approximate solution.");
   {
     CbcOrClpParam p("solv!e", "Solve problem",
       CBC_PARAM_ACTION_BAB);
-    p.setLonghelp(
-      "If there are no integer variables then this just solves LP.  If there are integer variables \
-this does branch and cut.");
-    parameters.push_back(p);
+         p.setLonghelp(
+          "If there are no integer variables then this just solves LP.  If there are integer variables \
+this does branch and cut." );
+         parameters.push_back( p );
   }
   {
-    CbcOrClpParam p("sosO!ptions", "Whether to use SOS from AMPL", "off", CBC_PARAM_STR_SOS);
+    CbcOrClpParam p("sosO!ptions", "Whether to use SOS from AMPL",  "off", CBC_PARAM_STR_SOS);
     p.append("on");
     p.setCurrentOption("on");
-    p.setLonghelp(
-      "Normally if AMPL says there are SOS variables they should be used, but sometime sthey should\
- be turned off - this does so.");
-    parameters.push_back(p);
+         p.setLonghelp(
+          "Normally if AMPL says there are SOS variables they should be used, but sometime sthey should\
+ be turned off - this does so." );
+         parameters.push_back( p );
   }
   {
     CbcOrClpParam p("slog!Level", "Level of detail in (LP) Solver output", -1, 63, CLP_PARAM_INT_SOLVERLOGLEVEL);
@@ -3897,15 +3898,15 @@ this does branch and cut.");
     parameters.push_back(p);
   }
   {
-    // Due to James Howey
-    CbcOrClpParam p("sosP!rioritize", "How to deal with SOS priorities",
-      "off", CBC_PARAM_STR_SOSPRIORITIZE);
-    p.append("high");
-    p.append("low");
-    p.append("orderhigh");
-    p.append("orderlow");
-    p.setLonghelp(
-      "This sets priorities for SOS.  The first two just set priority \
+     // Due to James Howey
+     CbcOrClpParam p("sosP!rioritize", "How to deal with SOS priorities",
+       "off", CBC_PARAM_STR_SOSPRIORITIZE);
+     p.append("high");
+     p.append("low");
+     p.append("orderhigh");
+     p.append("orderlow");
+     p.setLonghelp(
+       "This sets priorities for SOS.  The first two just set priority \
     relative to integers.  Orderhigh gives first set highest priority and integers \
     a low priority.  Orderlow gives integers high priority then SOS in order.");
     parameters.push_back(p);
