@@ -21,6 +21,7 @@ under the Eclipse Public License.])
 AC_CONFIG_SRCDIR(src/ClpSimplex.cpp)
 
 # Do some initialization work (version numbers, change prefix default, ...)
+AC_CONFIG_MACRO_DIRS([BuildTools m4])
 AC_COIN_INITIALIZE
 
 #############################################################################
