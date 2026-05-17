@@ -63,7 +63,6 @@ AC_COIN_CHK_PKG(Osi,[OsiClpLib OsiClpUnitTest])
 AC_COIN_CHK_PKG(OsiTests,[OsiClpUnitTest],[osi-unittests])
 AC_COIN_CHK_PKG(Sample,,[coindatasample],[],dataonly)
 AC_COIN_CHK_PKG(Netlib,,[coindatanetlib],[],dataonly)
-AC_COIN_CHK_PKG(Glpk,[ClpLib],[coinglpk])
 
 #############################################################################
 #                                    Aboca                                  #
@@ -123,8 +122,6 @@ AM_CONDITIONAL([COIN_HAS_WSMP],[test $have_wsmp = yes])
 #############################################################################
 #                             Other dependencies                            #
 #############################################################################
-
-AC_COIN_CHK_GNU_READLINE([ClpLib])
 
 # ClpRacingSolver uses std::thread. On glibc >= 2.34 (Ubuntu 22.04+),
 # pthread_create lives in libc and no extra flag is needed.  On older

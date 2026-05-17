@@ -7937,17 +7937,6 @@ int ClpSimplex::readMps(const char *filename,
   return status;
 }
 
-#if defined(COINUTILS_HAS_GLPK) && defined(CLP_HAS_GLPK)
-// Read GMPL files from the given filenames
-int ClpSimplex::readGMPL(const char *filename, const char *dataName, bool keepNames,
-                          glp_tran **coin_glp_tran, glp_prob **coin_glp_prob)
-{
-  int status = ClpModel::readGMPL(filename, dataName, keepNames, coin_glp_tran,
-				  coin_glp_prob);
-  createStatus();
-  return status;
-}
-#endif
 
 // Read file in LP format from file with name filename.
 int ClpSimplex::readLp(const char *filename, const double epsilon)

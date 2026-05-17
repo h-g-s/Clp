@@ -7,7 +7,7 @@
 #include "CoinPragma.hpp"
 #include "ClpConfig.h"
 
-#if defined(CLP_HAS_AMD) || defined(CLP_HAS_CHOLMOD) || defined(CLP_HAS_GLPK)
+#if defined(CLP_HAS_AMD) || defined(CLP_HAS_CHOLMOD)
 #define UFL_BARRIER
 #endif
 

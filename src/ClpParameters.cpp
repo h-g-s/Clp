@@ -1100,7 +1100,7 @@ void ClpParameters::addClpKwdParams() {
   parameters_[ClpParam::CHOLESKY]->appendKwd("fudge!Long_dummy");
   parameters_[ClpParam::CHOLESKY]->appendKwd("wssmp_dummy");
 #endif
-#if defined(CLP_HAS_AMD) || defined(CLP_HAS_CHOLMOD) || defined(CLP_HAS_GLPK)
+#if defined(CLP_HAS_AMD) || defined(CLP_HAS_CHOLMOD)
   parameters_[ClpParam::CHOLESKY]->appendKwd("Uni!versityOfFlorida");
 #else
   parameters_[ClpParam::CHOLESKY]->appendKwd("Uni!versityOfFlorida_dummy");

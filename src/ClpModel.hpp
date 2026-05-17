@@ -25,9 +25,6 @@
 #include "ClpModelParameters.hpp"
 #include "ClpObjective.hpp"
 
-#if defined(COINUTILS_HAS_GLPK) && defined(CLP_HAS_GLPK)
-#include "glpk.h"
-#endif
 
 class ClpEventHandler;
 /** This is the base class for Linear and quadratic Models
@@ -137,11 +134,6 @@ public:
       if < 0.0 use but try and improve */
   void modifyByIndicators(double startBigM=COIN_DBL_MAX,
 			  double bigM=1.0e7);
-#if defined(COINUTILS_HAS_GLPK) && defined(CLP_HAS_GLPK)
-  /// Read GMPL files from the given filenames
-  int readGMPL(const char *filename, const char *dataName, bool keepNames = false,
-               glp_tran **coin_glp_tran = NULL, glp_prob **coin_glp_prob = NULL);
-#endif
   /// Copy in integer informations
   void copyInIntegerInformation(const char *information);
   /// Drop integer informations

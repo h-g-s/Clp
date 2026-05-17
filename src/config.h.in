@@ -18,9 +18,6 @@
 /* Define to 1 if CoinUtils is available. */
 #undef CLP_HAS_COINUTILS
 
-/* Define to 1 if Glpk is available. */
-#undef CLP_HAS_GLPK
-
 /* Define to 1 if the MUMPS package is available */
 #undef CLP_HAS_MUMPS
 
@@ -32,9 +29,6 @@
 
 /* Define to 1 if OsiTests is available. */
 #undef CLP_HAS_OSITESTS
-
-/* Define to 1 if readline is available */
-#undef CLP_HAS_READLINE
 
 /* Define to 1 if Sample is available. */
 #undef CLP_HAS_SAMPLE
@@ -89,9 +83,6 @@
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
-
-/* Define to 1 if you have the 'readline' library (-lreadline). */
-#undef HAVE_LIBREADLINE
 
 /* Define to 1 if you have the <math.h> header file. */
 #undef HAVE_MATH_H

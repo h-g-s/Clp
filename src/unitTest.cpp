@@ -72,7 +72,7 @@ extern double largeRowsCount;
 
 // Function Prototypes. Function definitions is in this file.
 static void testingMessage(const char *const msg);
-#if defined(CLP_HAS_AMD) || defined(CLP_HAS_CHOLMOD) || defined(CLP_HAS_GLPK)
+#if defined(CLP_HAS_AMD) || defined(CLP_HAS_CHOLMOD)
 static int barrierAvailable = 1;
 static std::string nameBarrier = "barrier-UFL";
 #elif CLP_HAS_WSMP
@@ -1185,7 +1185,7 @@ int mainTest(int argc, const char *argv[], int algorithm,
           nameAlgorithm = "either";
         } else {
           nameAlgorithm = "barrier-slow";
-#if defined(CLP_HAS_AMD) || defined(CLP_HAS_CHOLMOD) || defined(CLP_HAS_GLPK)
+#if defined(CLP_HAS_AMD) || defined(CLP_HAS_CHOLMOD)
           solveOptions.setSpecialOption(4, 4);
           nameAlgorithm = "barrier-UFL";
 #endif

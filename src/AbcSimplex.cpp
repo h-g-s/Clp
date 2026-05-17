@@ -38,9 +38,6 @@
 #include "CoinModel.hpp"
 #include "CoinLpIO.hpp"
 
-#if defined(COINUTILS_HAS_GLPK) && defined(CLP_HAS_GLPK)
-#include "glpk.h"
-#endif
 
 //#############################################################################
 AbcSimplex::AbcSimplex(bool emptyMessages)
@@ -4390,18 +4387,6 @@ AbcSimplex::readMps(const char *filename,
   return status;
 }
 
-#if defined(COINUTILS_HAS_GLPK) && defined(CLP_HAS_GLPK)
-// Read GMPL files from the given filenames
-int
-AbcSimplex::readGMPL(const char *filename, const char * dataName, bool keepNames,
-                     glp_tran **coin_glp_tran, glp_prob **coin_glp_prob)
-{
-   int status = ClpSimplex::readGMPL(filename, dataName, keepNames, coin_glp_tran,
-                                     coin_glp_prob);
-  translate(DO_SCALE_AND_MATRIX|DO_BASIS_AND_ORDER|DO_STATUS|DO_SOLUTION);
-  return status;
-}
-#endif
 // Read file in LP format from file with name filename.
 int
 AbcSimplex::readLp(const char *filename, const double epsilon )

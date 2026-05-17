@@ -15,15 +15,11 @@
 #include <sstream>
 #include <string>
 
-#if defined(COINUTILS_HAS_GLPK) && defined(CLP_HAS_GLPK)
-#include "glpk.h"
-#else
 #define GLP_UNDEF 1
 #define GLP_FEAS 2
 #define GLP_INFEAS 3
 #define GLP_NOFEAS 4
 #define GLP_OPT 5
-#endif
 
 #if ABOCA_LITE
 // 1 is not owner of abcState_
@@ -193,10 +189,6 @@ int ClpMain1(std::deque<std::string> inputQueue, AbcSimplex &model,
   //__cilkrts_end_cilk();
   __cilkrts_set_param("nworkers", "1");
   // abcState_=1;
-#endif
-#if defined(COINUTILS_HAS_GLPK) && defined(CLP_HAS_GLPK)
-  glp_tran *coin_glp_tran = NULL;
-  glp_prob *coin_glp_prob = NULL;
 #endif
   // default action on import
   int allowImportErrors = 0;
@@ -1507,25 +1499,10 @@ int ClpMain1(std::deque<std::string> inputQueue, AbcSimplex &model,
           length = fileName.size();
           size_t percent = fileName.find('%');
           if (percent < length && percent > 0) {
-#if defined(COINUTILS_HAS_GLPK) && defined(CLP_HAS_GLPK)
-             gmpl = 1;
-             fileName = fileName.substr(0, percent);
-             gmplData = fileName.substr(percent + 1);
-             if (!absolutePath){
-                fileName = parameters[ClpParam::DIRECTORY]->dirName() +
-                   fileName;
-                gmplData = parameters[ClpParam::DIRECTORY]->dirName() +
-                   fileName;
-             }
-             gmpl = (percent < length - 1) ? 2 : 1;
-             printf("GMPL model file %s and data file %s\n",
-                    fileName.c_str(), gmplData.c_str());
-#else
              printf("Clp was not built with GMPL support. Exiting.\n");
              // This is surely not the right thing to do here. Should we
              // throw an exceptioon? Exit?
              abort();
-#endif
           }
           if (fileCoinReadable(fileName)) {
             // can open - lets go for it
@@ -1558,17 +1535,11 @@ int ClpMain1(std::deque<std::string> inputQueue, AbcSimplex &model,
            status = model_.readMps(
                 fileName.c_str(), keepImportNames != 0, allowImportErrors != 0);
         } else if (gmpl > 0) {
-#if defined(COINUTILS_HAS_GLPK) && defined(CLP_HAS_GLPK)
-           status = model_.readGMPL(
-                fileName.c_str(), (gmpl == 2) ? gmplData.c_str() : NULL,
-                keepImportNames != 0, &coin_glp_tran, &coin_glp_prob);
-#else
            printGeneralWarning(
                 model_, "Clp was not built with GMPL support. Exiting.\n");
             // This is surely not the right thing to do here. Should we
             // throw an exceptioon? Exit?
            abort();
-#endif
         } else {
 #ifdef KILL_ZERO_READLP
            status = model_.readLp(
@@ -2290,18 +2261,6 @@ clp watson.mps -\nscaling off\nprimalsimplex");
               int numberRows = model_.getNumRows();
               int numberColumns = model_.getNumCols();
               int numberGlpkRows = numberRows + 1;
-#if defined(COINUTILS_HAS_GLPK) && defined(CLP_HAS_GLPK)
-              if (coin_glp_prob) {
-                // from gmpl
-                numberGlpkRows = glp_get_num_rows(coin_glp_prob);
-                if (numberGlpkRows != numberRows) {
-                  buffer.str("");
-                  buffer << "Mismatch - cbc " << numberRows << " rows, glpk "
-                         << numberGlpkRows << std::endl;
-                  printGeneralMessage(model_, buffer.str());
-                }
-              }
-#endif
               fprintf(fp, "%d %d\n", numberGlpkRows, numberColumns);
               int iStat = model_.status();
               int iStat2 = GLP_UNDEF;
@@ -2343,20 +2302,6 @@ clp watson.mps -\nscaling off\nprimalsimplex");
                         primalColumnSolution[i], dualColumnSolution[i]);
               }
               fclose(fp);
-#if defined(COINUTILS_HAS_GLPK) && defined(CLP_HAS_GLPK)
-              if (coin_glp_prob) {
-                glp_read_sol(coin_glp_prob, fileName.c_str());
-                glp_mpl_postsolve(coin_glp_tran, coin_glp_prob, GLP_SOL);
-                // free up as much as possible
-                glp_free(coin_glp_prob);
-                glp_mpl_free_wksp(coin_glp_tran);
-                coin_glp_prob = NULL;
-                coin_glp_tran = NULL;
-                // gmp_free_mem();
-                /* check that no memory blocks are still allocated */
-                glp_free_env();
-              }
-#endif
               break;
             }
             // Write solution header (suggested by Luigi Poderico)
@@ -2891,16 +2836,6 @@ clp watson.mps -\nscaling off\nprimalsimplex");
       }
     }
   }
-#if defined(COINUTILS_HAS_GLPK) && defined(CLP_HAS_GLPK)
-  if (coin_glp_prob) {
-    // free up as much as possible
-    glp_free(coin_glp_prob);
-    glp_mpl_free_wksp(coin_glp_tran);
-    glp_free_env();
-    coin_glp_prob = NULL;
-    coin_glp_tran = NULL;
-  }
-#endif
   // By now all memory should be freed
 #ifdef DMALLOC
   dmalloc_log_unfreed();

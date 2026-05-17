@@ -268,12 +268,6 @@ public:
   int readMps(const char *filename,
     bool keepNames = false,
     bool ignoreErrors = false);
-#if defined(COINUTILS_HAS_GLPK) && defined(CLP_HAS_GLPK)
-  /// Read GMPL files from the given filenames
-  int readGMPL(const char *filename, const char *dataName,
-	       bool keepNames = false,
-	       glp_tran **coin_glp_tran = NULL, glp_prob **coin_glp_prob = NULL);
-#endif
   /// Read file in LP format from file with name filename.
   /// See class CoinLpIO for description of this format.
   int readLp(const char *filename, const double epsilon = 1e-5);

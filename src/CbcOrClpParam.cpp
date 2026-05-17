@@ -27,11 +27,6 @@
 #include "ClpFactorization.hpp"
 #endif
 
-#ifdef CLP_HAS_READLINE
-#include <readline/readline.h>
-#include <readline/history.h>
-#endif
-
 #ifdef COIN_HAS_CBC
 // from CoinSolve
 static char coin_prompt[] = "Coin:";
@@ -1313,28 +1308,11 @@ CoinReadNextField()
   std::string field;
   if (!where) {
     // need new line
-#ifdef CLP_HAS_READLINE
-    if (CbcOrClpReadCommand == stdin) {
-      // Get a line from the user.
-      where = readline(coin_prompt);
-
-      // If the line has any text in it, save it on the history.
-      if (where) {
-        if (*where)
-          add_history(where);
-        strcpy(line, where);
-        free(where);
-      }
-    } else {
-      where = fgets(line, 1000, CbcOrClpReadCommand);
-    }
-#else
     if (CbcOrClpReadCommand == stdin) {
       fputs(coin_prompt, stdout);
       fflush(stdout);
     }
     where = fgets(line, 1000, CbcOrClpReadCommand);
-#endif
     if (!where)
       return field; // EOF
     where = line;
@@ -1819,7 +1797,7 @@ have more rounds of cuts - see passC!uts and passT!ree.");
     p.append("fudge!Long_dummy");
     p.append("wssmp_dummy");
 #endif
-#if defined(CLP_HAS_AMD) || defined(CLP_HAS_CHOLMOD) || defined(CLP_HAS_GLPK)
+#if defined(CLP_HAS_AMD) || defined(CLP_HAS_CHOLMOD)
     p.append("Uni!versityOfFlorida");
 #else
     p.append("Uni!versityOfFlorida_dummy");
@@ -3297,24 +3275,6 @@ This is a first try and will hopefully become more sophisticated.");
   }
 #endif
 #ifdef COIN_HAS_CBC
-#ifdef CBC_HAS_NAUTY
-  {
-    CbcOrClpParam p("Orbit!alBranching", "Whether to try orbital branching",
-      "off", CBC_PARAM_STR_ORBITAL);
-    p.append("slow!ish");
-    p.append("strong");
-    p.append("force");
-    p.append("simple");
-    p.append("on");
-    p.append("light!weight");
-    p.append("more!printing");
-    p.setLonghelp(
-      "This switches on Orbital branching. \
-Value 'on' just adds orbital, 'strong' tries extra fixing in strong branching.\
- 'lightweight' is as on where computation seems cheap");
-    parameters.push_back(p);
-  }
-#endif
   {
     CbcOrClpParam p("PrepN!ames", "If column names will be kept in pre-processed model",
       "off", CBC_PARAM_STR_PREPROCNAMES);
