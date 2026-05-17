@@ -263,7 +263,7 @@ int ClpMain1(std::deque<std::string> inputQueue, AbcSimplex &model,
   int scaleBarrier = 2;
   int doKKT = 0;
   int crossover = 2; // do crossover unless quadratic
-  bool interactiveMode = false, canOpen;
+  bool canOpen;
 
   // model_.scaling(1);
   // model_.setDualBound(1.0e6);
@@ -274,15 +274,17 @@ int ClpMain1(std::deque<std::string> inputQueue, AbcSimplex &model,
   // model_.setPrimalColumnPivotAlgorithm(steepP);
   int status, iValue;
   double dValue;
-  std::string prompt = "Clp: ";
 
-  // If no arguments, just go into interactive mode
+  // If no arguments, print help and exit (unless called from AMPL)
   if (inputQueue.empty()) {
-    interactiveMode = true;
-    // let's give the sucker a hint
-    std::cout << "Clp takes input from arguments ( - switches to stdin)"
-              << std::endl
-              << "Enter ? for list of commands or help" << std::endl;
+    if (!usingAmpl) {
+      std::cout << "Clp version " << CLP_VERSION
+                << " — COIN-OR Linear Programming solver\n\n"
+                << "Usage:\n"
+                << "  clp <model.mps[.gz]> [options] -solve\n\n"
+                << "Use 'clp -help' for a list of parameters.\n";
+      return 0;
+    }
   } else {
     // See if first is file
     std::string inputFile = inputQueue.front();
@@ -299,7 +301,7 @@ int ClpMain1(std::deque<std::string> inputQueue, AbcSimplex &model,
   while (1) {
 
     // get next command
-    field = CoinParamUtils::getNextField(inputQueue, interactiveMode, prompt);
+    field = CoinParamUtils::getNextField(inputQueue);
 
     // exit if null or similar
     if (!field.length()) {
@@ -311,27 +313,21 @@ int ClpMain1(std::deque<std::string> inputQueue, AbcSimplex &model,
       }
     }
 
-    // These are some special case we deal with separately
-    // (only in non-interactive mode)
-    if (!interactiveMode){
-       if (field == "-") {
-          std::cout << "Switching to line mode" << std::endl;
-          interactiveMode = true;
-          while (!inputQueue.empty())
-             inputQueue.pop_front();
-          field = CoinParamUtils::getNextField(inputQueue, interactiveMode, prompt);
-       } else if (field[0] != '-') {
-          // special dispensation - taken as -import name, put name back on queue
-          inputQueue.push_front(field);
-          field = "import";
+    // Handle field prefix stripping and special tokens
+    if (field == "-") {
+      // '-' alone is no longer valid; ignore and continue
+      continue;
+    } else if (field[0] != '-') {
+       // special dispensation - taken as -import name, put name back on queue
+       inputQueue.push_front(field);
+       field = "import";
+    } else {
+       if (field != "--") {
+          // take off -
+          field = field.substr(1);
        } else {
-          if (field != "--") {
-             // take off -
-             field = field.substr(1);
-          } else {
-             // special dispensation - taken as -import --
-             field = "import";
-          }
+          // special dispensation - taken as -import --
+          field = "import";
        }
     }
 
@@ -348,17 +344,10 @@ int ClpMain1(std::deque<std::string> inputQueue, AbcSimplex &model,
        continue;
     }
     if (!numberMatches) {
-       if (!interactiveMode){
-          std::cout << "Unrecognized parameter - " << field
-          << ", exiting..."
-          << std::endl;
-          paramCode = ClpParam::EXIT;
-       } else {
-          std::cout << "Unrecognized parameter - " << field
-                    << " - enter valid command or end to exit"
-                    << std::endl;
-          continue;
-       }
+       std::cout << "Unrecognized parameter - " << field
+       << ", exiting..."
+       << std::endl;
+       paramCode = ClpParam::EXIT;
     }
 
     // Do some translation for backwards compatibility
@@ -1980,11 +1969,6 @@ int ClpMain1(std::deque<std::string> inputQueue, AbcSimplex &model,
           }
           model_.setObjectiveOffset(-model_.objectiveOffset());
         } break;
-      case ClpParam::STDIN:
-        interactiveMode = true;
-        while (!inputQueue.empty())
-          inputQueue.pop_front();
-        break;
       case ClpParam::NETLIB_DUAL:
       case ClpParam::NETLIB_EITHER:
       case ClpParam::NETLIB_BARRIER:

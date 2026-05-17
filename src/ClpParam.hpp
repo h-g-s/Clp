@@ -69,7 +69,6 @@ public:
       PRIMALSIMPLEX,
       REALLY_SCALE,
       REVERSE,
-      STDIN,
       TIGHTEN,
       USERCLP, 
       LASTCLPACTIONPARAM,
