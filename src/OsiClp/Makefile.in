@@ -145,7 +145,8 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(includecoindir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-libOsiClp_la_DEPENDENCIES = $(am__DEPENDENCIES_1) ../libClp.la
+libOsiClp_la_DEPENDENCIES = $(am__DEPENDENCIES_1) ../libClp.la \
+	../Osi/libOsi.la
 am_libOsiClp_la_OBJECTS = OsiClpSolverInterface.lo
 libOsiClp_la_OBJECTS = $(am_libOsiClp_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -428,7 +429,7 @@ lib_LTLIBRARIES = libOsiClp.la
 libOsiClp_la_SOURCES = OsiClpSolverInterface.cpp OsiClpSolverInterface.hpp
 
 # List all additionally required libraries
-libOsiClp_la_LIBADD = $(OSICLPLIB_LFLAGS) ../libClp.la
+libOsiClp_la_LIBADD = $(OSICLPLIB_LFLAGS) ../libClp.la ../Osi/libOsi.la
 
 # This is for libtool
 AM_LDFLAGS = $(LT_LDFLAGS)

@@ -2573,7 +2573,6 @@ ClpPoolMatrix::reverseOrderedCopy() const
   return NULL;
 #endif
 }
-#undef ABOCA_LITE
 //unscaled versions
 void ClpPoolMatrix::times(double scalar,
   const double *COIN_RESTRICT x, double *COIN_RESTRICT y) const

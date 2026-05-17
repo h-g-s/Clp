@@ -15,7 +15,6 @@
 #include "CoinMessageHandler.hpp"
 #include "CoinHelperFunctions.hpp"
 #include "CoinTime.hpp"
-#include "AbcCommon.hpp"
 #include "ClpEventHandler.hpp"
 // Redefine stuff for Clp
 #ifndef OSI_IDIOT
@@ -2176,29 +2175,17 @@ void Idiot::crossOver(int mode)
         justValuesPass = false;
       if (!wantVector) {
         //#define TWO_GOES
-#ifdef ABC_INHERIT
-#ifndef TWO_GOES
-        model_->dealWithAbc(1, justValuesPass ? 3 : 1);
-#else
-        model_->dealWithAbc(1, 1 + 11);
-#endif
-#else
 #ifndef TWO_GOES
         model_->primal(justValuesPass ? 2 : 1);
 #else
         model_->primal(1 + 11);
-#endif
 #endif
       } else {
         ClpMatrixBase *matrix = model_->clpMatrix();
         ClpPackedMatrix *clpMatrix = dynamic_cast< ClpPackedMatrix * >(matrix);
         assert(clpMatrix);
         clpMatrix->makeSpecialColumnCopy();
-#ifdef ABC_INHERIT
-        model_->dealWithAbc(1, 1);
-#else
         model_->primal(1);
-#endif
         clpMatrix->releaseSpecialColumnCopy();
       }
       if (presolve) {
@@ -2216,11 +2203,7 @@ void Idiot::crossOver(int mode)
       model_ = saveModel;
       saveModel = NULL;
       if (justValuesPass)
-#ifdef ABC_INHERIT
-        model_->dealWithAbc(1, 3);
-#else
         model_->primal(2);
-#endif
     }
     if (allowInfeasible) {
       CoinMemcpyN(saveRowUpper, nrows, model_->rowUpper());
@@ -2286,21 +2269,13 @@ void Idiot::crossOver(int mode)
         presolve = 0;
       }
       if (!wantVector) {
-#ifdef ABC_INHERIT
-        model_->dealWithAbc(1, 1);
-#else
         model_->primal(1);
-#endif
       } else {
         ClpMatrixBase *matrix = model_->clpMatrix();
         ClpPackedMatrix *clpMatrix = dynamic_cast< ClpPackedMatrix * >(matrix);
         assert(clpMatrix);
         clpMatrix->makeSpecialColumnCopy();
-#ifdef ABC_INHERIT
-        model_->dealWithAbc(1, 1);
-#else
         model_->primal(1);
-#endif
         clpMatrix->releaseSpecialColumnCopy();
       }
       if (presolve) {
@@ -2346,21 +2321,13 @@ void Idiot::crossOver(int mode)
         presolve = 0;
       }
       if (!wantVector) {
-#ifdef ABC_INHERIT
-        model_->dealWithAbc(1, 1);
-#else
         model_->primal(1);
-#endif
       } else {
         ClpMatrixBase *matrix = model_->clpMatrix();
         ClpPackedMatrix *clpMatrix = dynamic_cast< ClpPackedMatrix * >(matrix);
         assert(clpMatrix);
         clpMatrix->makeSpecialColumnCopy();
-#ifdef ABC_INHERIT
-        model_->dealWithAbc(1, 1);
-#else
         model_->primal(1);
-#endif
         clpMatrix->releaseSpecialColumnCopy();
       }
       if (presolve) {

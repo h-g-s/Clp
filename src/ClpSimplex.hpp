@@ -19,6 +19,10 @@
 #include "ClpConfig.h"
 #include "CoinIndexedVector.hpp"
 
+#define cilk_spawn
+#define cilk_sync
+#define SHORT_REGION 2
+
 class ClpDualRowPivot;
 class ClpPrimalColumnPivot;
 class ClpFactorization;
@@ -31,61 +35,6 @@ class OsiClpSolverInterface;
 class CoinWarmStartBasis;
 class ClpDisasterHandler;
 class ClpConstraint;
-/*
-  May want to use Clp defaults so that with ABC defined but not used
-  it behaves as Clp (and ABC used will be different than if not defined)
- */
-#ifdef ABC_INHERIT
-#ifndef CLP_INHERIT_MODE
-#define CLP_INHERIT_MODE 1
-#endif
-#ifndef ABC_CLP_DEFAULTS
-#define ABC_CLP_DEFAULTS 0
-#endif
-#else
-#undef ABC_CLP_DEFAULTS
-#define ABC_CLP_DEFAULTS 1
-#endif
-#ifdef CLP_HAS_ABC
-#include "AbcCommon.hpp"
-class AbcTolerancesEtc;
-class AbcSimplex;
-#include "CoinAbcCommon.hpp"
-#endif
-#ifndef ABC_INHERIT
-#if ABOCA_LITE
-#ifndef FAKE_CILK
-#include <cilk/cilk.h>
-#else
-#undef cilk_for
-#undef cilk_spawn
-#undef cilk_sync
-#define cilk_for for
-#define cilk_spawn
-#define cilk_sync
-#endif
-#ifndef LONG_REGION_2
-#define LONG_REGION_2 1
-#endif
-#define SHORT_REGION 1
-#else
-#define cilk_spawn
-#define cilk_sync
-#endif
-#ifdef LONG_REGION_2
-#define SHORT_REGION 1
-#else
-#define SHORT_REGION 2
-#endif
-// for now keep simple
-#undef LONG_REGION_2
-#undef SHORT_REGION
-#define SHORT_REGION 2
-#else
-//ABC_INHERIT
-#define LONG_REGION_2 1
-#define SHORT_REGION 1
-#endif
 /** This solves LPs using the simplex method
 
     It inherits from ClpModel and all its arrays are created at
@@ -174,28 +123,6 @@ public:
   /** This copies back stuff from miniModel and then deletes miniModel.
          Only to be used with mini constructor */
   void originalModel(ClpSimplex *miniModel);
-#ifdef ABC_INHERIT
-  inline int abcState() const
-  {
-    return abcState_;
-  }
-  inline void setAbcState(int state)
-  {
-    abcState_ = state;
-  }
-  inline AbcSimplex *abcSimplex() const
-  {
-    return abcSimplex_;
-  }
-  inline void setAbcSimplex(AbcSimplex *simplex)
-  {
-    abcSimplex_ = simplex;
-  }
-  /// Returns 0 if dual can be skipped
-  int doAbcDual();
-  /// Returns 0 if primal can be skipped
-  int doAbcPrimal(int ifValuesPass);
-#endif
   /** Array persistence flag
          If 0 then as now (delete/new)
          1 then only do arrays if bigger needed
@@ -292,12 +219,6 @@ public:
   void passInEventHandler(const ClpEventHandler *eventHandler);
   /// Puts solution back into small model
   void getbackSolution(const ClpSimplex &smallModel, const int *whichRow, const int *whichColumn);
-#ifdef ABC_INHERIT
-  /// Loads tolerances etc
-  void loadTolerancesEtc(const AbcTolerancesEtc &data);
-  /// Unloads tolerances etc
-  void unloadTolerancesEtc(AbcTolerancesEtc &data);
-#endif
   //@}
 
   /**@name Functions most useful to user */
@@ -362,15 +283,6 @@ public:
   int reducedGradient(int phase = 0);
   /// Solve using structure of model and maybe in parallel
   int solve(CoinStructuredModel *model);
-#ifdef ABC_INHERIT
-  /** solvetype 0 for dual, 1 for primal
-      startup 1 for values pass
-      interrupt whether to pass across interrupt handler
-      add 10 to return AbcSimplex 
-  */
-  AbcSimplex *dealWithAbc(int solveType, int startUp, bool interrupt = false);
-  //void dealWithAbc(int solveType,int startUp,bool interrupt=false);
-#endif
   /** This loads a model from a CoinStructuredModel object - returns number of errors.
          If originalOrder then keep to order stored in blocks,
          otherwise first column/rows correspond to first block - etc.
@@ -1983,14 +1895,6 @@ protected:
   ClpSimplex *baseModel_;
   /// For dealing with all issues of cycling etc
   ClpSimplexProgress progress_;
-#ifdef ABC_INHERIT
-  AbcSimplex *abcSimplex_;
-  int abcState_;
-#define CLP_ABC_WANTED 1
-#define CLP_ABC_WANTED_PARALLEL 2
-#define CLP_ABC_FULL_DONE 8
-  // bits 256,512,1024 for crash
-#endif
 #define CLP_ABC_BEEN_FEASIBLE 65536
   /// Number of degenerate pivots since last perturbed
   int numberDegeneratePivots_;
@@ -2046,12 +1950,6 @@ void ClpSimplexUnitTest(const std::string &mpsDir);
 // For Devex stuff
 #define DEVEX_TRY_NORM 1.0e-4
 #define DEVEX_ADD_ONE 1.0
-#if defined(ABC_INHERIT) || defined(THREADS_IN_ANALYZE)
-// Use pthreads
-#define CLP_USE_PTHREADS
-// Use pthreads
-#include <pthread.h>
-#endif
 typedef struct {
   double result;
   //const CoinIndexedVector * constVector; // can get rid of
@@ -2157,29 +2055,7 @@ typedef struct {
   int numberToDo;
   int numberColumns;
 } clpTempInfo;
-#ifndef ABC_INHERIT
-#if ABOCA_LITE
-void moveAndZero(clpTempInfo *info, int type, void *extra);
-// 2 is owner of abcState_
-#ifdef ABCSTATE_LITE
-#if ABCSTATE_LITE == 2
-int abcState_ = 0;
-#else
-extern int abcState_;
-#endif
-inline int abcState()
-{
-  return abcState_;
-}
-inline void setAbcState(int state)
-{
-  abcState_ = state;
-}
-#endif
-#else
 #define abcState 0
-#endif
-#endif
 #ifdef CLP_USER_DRIVEN
 // expand as needed
 typedef struct {

@@ -281,9 +281,6 @@ void ClpParameters::setDefaults(int strategy) {
    // Now set up  parameters according to overall strategies
    switch (strategy) {
     case ClpParameters::DefaultStrategy:
-#if CLP_HAS_ABC
-      parameters_[ClpParam::ABCWANTED]->setDefault("off");
-#endif
       parameters_[ClpParam::COMMANDPRINTLEVEL]->setDefault("more");
       parameters_[ClpParam::BARRIERSCALE]->setDefault("off");
       parameters_[ClpParam::BIASLU]->setDefault("LX");
@@ -1040,24 +1037,6 @@ void ClpParameters::addClpKwdParams() {
     getParam(code)->setType(CoinParam::paramKwd);
   }
 
-#if CLP_HAS_ABC
-  parameters_[ClpParam::ABCWANTED]->setup(
-      "abc", "Whether to visit Aboca",
-      "Decide whether to use A Basic Optimization Code (Accelerated?) and "
-      "whether to try going parallel!");
-  parameters_[ClpParam::ABCWANTED]->appendKwd("off");
-  parameters_[ClpParam::ABCWANTED]->appendKwd("one");
-  parameters_[ClpParam::ABCWANTED]->appendKwd("two");
-  parameters_[ClpParam::ABCWANTED]->appendKwd("three");
-  parameters_[ClpParam::ABCWANTED]->appendKwd("four");
-  parameters_[ClpParam::ABCWANTED]->appendKwd("five");
-  parameters_[ClpParam::ABCWANTED]->appendKwd("six");
-  parameters_[ClpParam::ABCWANTED]->appendKwd("seven");
-  parameters_[ClpParam::ABCWANTED]->appendKwd("eight");
-  parameters_[ClpParam::ABCWANTED]->appendKwd("on");
-  parameters_[ClpParam::ABCWANTED]->appendKwd("decide");
-  paramAboca.setFakeKeyWord(10);
-#endif
 
   parameters_[ClpParam::COMMANDPRINTLEVEL]->setup(
       "allC!ommands", "What priority level of commands to print",
@@ -1191,16 +1170,8 @@ void ClpParameters::addClpKwdParams() {
 
   parameters_[ClpParam::FACTORIZATION]->setup(
       "fact!orization", "Which factorization to use",
-#ifndef ABC_INHERIT
       "The default is to use the normal CoinFactorization, but other choices "
       "are a dense one, OSL's, or one designed for small problems."
-#else
-      "Normally the default is to use the normal CoinFactorization, but other "
-      "choices are a dense one, OSL's, or one designed for small problems. "
-      "However if at Aboca then the default is CoinAbcFactorization and other "
-      "choices are a dense one, one designed for small problems or if enabled "
-      "a long factorization."
-#endif
   );
   parameters_[ClpParam::FACTORIZATION]->appendKwd("normal");
   parameters_[ClpParam::FACTORIZATION]->appendKwd("dense");

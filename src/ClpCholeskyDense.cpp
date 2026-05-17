@@ -12,17 +12,12 @@
 #include "ClpCholeskyDense.hpp"
 #include "ClpMessage.hpp"
 #include "ClpQuadraticObjective.hpp"
-#if CLP_HAS_ABC
-#include "CoinAbcCommon.hpp"
-#endif
-#if CLP_HAS_ABC < 3
 #undef cilk_for
 #undef cilk_spawn
 #undef cilk_sync
 #define cilk_for for
 #define cilk_spawn
 #define cilk_sync
-#endif
 
 /*#############################################################################*/
 /* Constructors / Destructor / Assignment*/

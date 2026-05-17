@@ -93,14 +93,6 @@ public:
     double pivotCheck,
     bool checkBeforeModifying = false,
     double acceptablePivot = 1.0e-8);
-#if ABOCA_LITE_FACTORIZATION
-  /// Does btranU part of replaceColumn (skipping entries)
-  void replaceColumn1(CoinIndexedVector *regionSparse, int pivotRow);
-  /// Does replaceColumn - having already done btranU
-  int replaceColumn2(CoinIndexedVector *regionSparse,
-    int pivotRow,
-    double pivotCheck);
-#endif
   //@}
 
   /**@name various uses of factorization (return code number elements)

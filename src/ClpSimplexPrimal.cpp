@@ -97,10 +97,6 @@
 #include <string>
 #include <stdio.h>
 #include <iostream>
-#if ABOCA_LITE
-#undef ALT_UPDATE_WEIGHTS
-#define ALT_UPDATE_WEIGHTS 2
-#endif
 #if ALT_UPDATE_WEIGHTS == 1
 CoinIndexedVector *altVector[3] = { NULL, NULL, NULL };
 #endif

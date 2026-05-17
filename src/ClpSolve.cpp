@@ -34,13 +34,6 @@
 #include "ClpPackedMatrix.hpp"
 #include "ClpMessage.hpp"
 #include "CoinTime.hpp"
-#if CLP_HAS_ABC
-#include "CoinAbcCommon.hpp"
-#endif
-#ifdef ABC_INHERIT
-#include "AbcSimplex.hpp"
-#include "AbcSimplexFactorization.hpp"
-#endif
 #include "CoinStructuredModel.hpp"
 double zz_slack_value = 0.0;
 #ifdef CLP_USEFUL_PRINTOUT
@@ -356,9 +349,6 @@ static ClpInterior *currentModel2 = NULL;
 
 #include "CoinSignal.hpp"
 static ClpSimplex *currentModel = NULL;
-#ifdef ABC_INHERIT
-static AbcSimplex *currentAbcModel = NULL;
-#endif
 
 extern "C" {
 static void
@@ -369,10 +359,6 @@ static void
 {
   if (currentModel != NULL)
     currentModel->setMaximumIterations(0); // stop at next iterations
-#ifdef ABC_INHERIT
-  if (currentAbcModel != NULL)
-    currentAbcModel->setMaximumIterations(0); // stop at next iterations
-#endif
 #ifndef SLIM_CLP
   if (currentModel2 != NULL)
     currentModel2->setMaximumBarrierIterations(0); // stop at next iterations
@@ -543,294 +529,6 @@ void instrument_print()
 }
 #endif
 //#if ABC_PARALLEL == 2
-#if CLP_HAS_ABC > 2
-#ifndef FAKE_CILK
-int number_cilk_workers = 0;
-#include <cilk/cilk_api.h>
-#include <cilk/cilk.h>
-#endif
-#endif
-#ifdef ABC_INHERIT
-AbcSimplex *
-ClpSimplex::dealWithAbc(int solveType, int startUp,
-  bool interrupt)
-{
-  bool keepAbc = startUp >= 10;
-  startUp = startUp % 10;
-  AbcSimplex *abcModel2 = NULL;
-  if (!this->abcState() || !numberRows_ || !numberColumns_) {
-    //this->readBasis("aaa.bas");
-    if (!solveType) {
-      this->dual(0);
-    } else if (solveType == 1) {
-      int ifValuesPass = startUp ? 1 : 0;
-      if (startUp == 3)
-        ifValuesPass = 2;
-      this->primal(ifValuesPass);
-    }
-    //this->writeBasis("a.bas",true);
-  } else {
-    abcModel2 = new AbcSimplex(*this);
-    if (interrupt)
-      currentAbcModel = abcModel2;
-    //if (abcSimplex_) {
-    // move factorization stuff
-    abcModel2->factorization()->synchronize(this->factorization(), abcModel2);
-    //}
-    //abcModel2->startPermanentArrays();
-    int crashState = abcModel2->abcState() & (256 + 512 + 1024);
-    abcModel2->setAbcState(CLP_ABC_WANTED | crashState | (abcModel2->abcState() & 15));
-    int ifValuesPass = startUp ? 1 : 0;
-    if (startUp == 3)
-      ifValuesPass = 2;
-    // temp
-    if (fabs(this->primalTolerance() - 1.001e-6) < 0.999e-9) {
-      int type = 1;
-      double diff = this->primalTolerance() - 1.001e-6;
-      printf("Diff %g\n", diff);
-      if (fabs(diff - 1.0e-10) < 1.0e-13)
-        type = 2;
-      else if (fabs(diff - 1.0e-11) < 1.0e-13)
-        type = 3;
-#if 0
-      ClpSimplex * thisModel = static_cast<ClpSimplexOther *> (this)->dualOfModel(1.0,1.0);
-      if (thisModel) {
-	printf("Dual of model has %d rows and %d columns\n",
-	       thisModel->numberRows(), thisModel->numberColumns());
-	thisModel->setOptimizationDirection(1.0);
-	Idiot info(*thisModel);
-	info.setStrategy(512 | info.getStrategy());
-	// Allow for scaling
-	info.setStrategy(32 | info.getStrategy());
-	info.setStartingWeight(1.0e3);
-	info.setReduceIterations(6);
-	info.crash(50, this->messageHandler(), this->messagesPointer(),false);
-	// make sure later that primal solution in correct place
-	// and has correct sign
-	abcModel2->setupDualValuesPass(thisModel->primalColumnSolution(),
-				       thisModel->dualRowSolution(),type);
-	//thisModel->dual();
-	delete thisModel;
-      }
-#else
-      if (!solveType) {
-        this->dual(0);
-        abcModel2->setupDualValuesPass(this->dualRowSolution(),
-          this->primalColumnSolution(), type);
-      } else if (solveType == 1) {
-        ifValuesPass = 1;
-        abcModel2->setStateOfProblem(abcModel2->stateOfProblem() | VALUES_PASS);
-        Idiot info(*abcModel2);
-        info.setStrategy(512 | info.getStrategy());
-        // Allow for scaling
-        info.setStrategy(32 | info.getStrategy());
-        info.setStartingWeight(1.0e3);
-        info.setReduceIterations(6);
-        info.crash(200, abcModel2->messageHandler(), abcModel2->messagesPointer(), false);
-        //memcpy(abcModel2->primalColumnSolution(),this->primalColumnSolution(),
-        //     this->numberColumns()*sizeof(double));
-      }
-#endif
-    }
-    int numberCpu = this->abcState() & 15;
-    if (numberCpu == 9) {
-      numberCpu = 1;
-#if ABC_PARALLEL == 2
-#ifndef FAKE_CILK
-      if (number_cilk_workers > 1)
-        numberCpu = std::min(2 * number_cilk_workers, 8);
-#endif
-#endif
-    } else if (numberCpu == 10) {
-      // maximum
-      numberCpu = 4;
-    } else if (numberCpu == 10) {
-      // decide
-      if (abcModel2->getNumElements() < 5000)
-        numberCpu = 1;
-#if ABC_PARALLEL == 2
-#ifndef FAKE_CILK
-      else if (number_cilk_workers > 1)
-        numberCpu = std::min(2 * number_cilk_workers, 8);
-#endif
-#endif
-      else
-        numberCpu = 1;
-    } else {
-#if ABC_PARALLEL == 2
-#ifndef FAKE_CILK
-      char temp[3];
-      sprintf(temp, "%d", numberCpu);
-      //__cilkrts_set_param("nworkers", temp);
-      printf("setting cilk workers to %d  XX use env CILK_NWORKERS\n", numberCpu);
-      number_cilk_workers = numberCpu;
-
-#endif
-#endif
-    }
-    char line[200];
-#if ABC_PARALLEL
-#if ABC_PARALLEL == 2
-#ifndef FAKE_CILK
-    if (!number_cilk_workers) {
-      number_cilk_workers = __cilkrts_get_nworkers();
-      sprintf(line, "%d cilk workers", number_cilk_workers);
-      handler_->message(CLP_GENERAL, messages_)
-        << line
-        << CoinMessageEol;
-    }
-#endif
-#endif
-    abcModel2->setParallelMode(numberCpu - 1);
-#endif
-    //if (abcState()==3||abcState()==4) {
-    //abcModel2->setMoreSpecialOptions((131072*2)|abcModel2->moreSpecialOptions());
-    //}
-    //if (processTune>0&&processTune<8)
-    //abcModel2->setMoreSpecialOptions(abcModel2->moreSpecialOptions()|131072*processTune);
-#if ABC_INSTRUMENT
-    double startTimeCpu = CoinCpuTime();
-    double startTimeElapsed = CoinGetTimeOfDay();
-#if ABC_INSTRUMENT > 1
-    memset(abcPricing, 0, sizeof(abcPricing));
-    memset(abcPricingDense, 0, sizeof(abcPricing));
-    instrument_initialize(abcModel2->numberRows());
-#endif
-#endif
-    if (!solveType) {
-      abcModel2->ClpSimplex::doAbcDual();
-    } else if (solveType == 1) {
-      int saveOptions = abcModel2->specialOptions();
-      //if (startUp==2)
-      //abcModel2->setSpecialOptions(8192|saveOptions);
-      abcModel2->ClpSimplex::doAbcPrimal(ifValuesPass);
-      abcModel2->setSpecialOptions(saveOptions);
-    }
-#if ABC_INSTRUMENT
-    if (solveType < 2) {
-      double timeCpu = CoinCpuTime() - startTimeCpu;
-      double timeElapsed = CoinGetTimeOfDay() - startTimeElapsed;
-      sprintf(line, "Cpu time for %s (%d rows, %d columns %d elements) %g elapsed %g ratio %g - %d iterations",
-        this->problemName().c_str(), this->numberRows(), this->numberColumns(),
-        this->getNumElements(),
-        timeCpu, timeElapsed, timeElapsed ? timeCpu / timeElapsed : 1.0, abcModel2->numberIterations());
-      handler_->message(CLP_GENERAL, messages_)
-        << line
-        << CoinMessageEol;
-#if ABC_INSTRUMENT > 1
-      {
-        int n;
-        n = 0;
-        for (int i = 0; i < 20; i++)
-          n += abcPricing[i];
-        printf("CCSparse pricing done %d times", n);
-        int n2 = 0;
-        for (int i = 0; i < 20; i++)
-          n2 += abcPricingDense[i];
-        if (n2)
-          printf(" and dense pricing done %d times\n", n2);
-        else
-          printf("\n");
-        n = 0;
-        printf("CCS");
-        for (int i = 0; i < 19; i++) {
-          if (abcPricing[i]) {
-            if (n == 5) {
-              n = 0;
-              printf("\nCCS");
-            }
-            n++;
-            printf("(%d els,%d times) ", i, abcPricing[i]);
-          }
-        }
-        if (abcPricing[19]) {
-          if (n == 5) {
-            n = 0;
-            printf("\nCCS");
-          }
-          n++;
-          printf("(>=19 els,%d times) ", abcPricing[19]);
-        }
-        if (n2) {
-          printf("CCD");
-          for (int i = 0; i < 19; i++) {
-            if (abcPricingDense[i]) {
-              if (n == 5) {
-                n = 0;
-                printf("\nCCD");
-              }
-              n++;
-              int k1 = (numberRows_ / 16) * i;
-              ;
-              int k2 = std::min(numberRows_, k1 + (numberRows_ / 16) - 1);
-              printf("(%d-%d els,%d times) ", k1, k2, abcPricingDense[i]);
-            }
-          }
-        }
-        printf("\n");
-      }
-      instrument_print();
-#endif
-    }
-#endif
-    abcModel2->moveStatusToClp(this);
-#if 1
-    if (!problemStatus_) {
-      double offset;
-      CoinMemcpyN(this->objectiveAsObject()->gradient(this,
-                    this->primalColumnSolution(), offset, true),
-        numberColumns_, this->dualColumnSolution());
-      this->clpMatrix()->transposeTimes(-1.0,
-        this->dualRowSolution(),
-        this->dualColumnSolution());
-      memset(this->primalRowSolution(), 0, numberRows_ * sizeof(double));
-      this->clpMatrix()->times(1.0,
-        this->primalColumnSolution(),
-        this->primalRowSolution());
-      this->checkSolutionInternal();
-      if (sumDualInfeasibilities_ > 100.0 * dualTolerance_) {
-#if CBC_USEFUL_PRINTING > 0
-        printf("internal check on duals failed %d %g\n",
-          numberDualInfeasibilities_, sumDualInfeasibilities_);
-#endif
-      } else {
-        sumDualInfeasibilities_ = 0.0;
-        numberDualInfeasibilities_ = 0;
-      }
-      if (sumPrimalInfeasibilities_ > 100.0 * primalTolerance_) {
-#if CBC_USEFUL_PRINTING > 0
-        printf("internal check on primals failed %d %g\n",
-          numberPrimalInfeasibilities_, sumPrimalInfeasibilities_);
-#endif
-      } else {
-        sumPrimalInfeasibilities_ = 0.0;
-        numberPrimalInfeasibilities_ = 0;
-      }
-      problemStatus_ = 0;
-    }
-#endif
-    //ClpModel::stopPermanentArrays();
-    this->setSpecialOptions(this->specialOptions() & ~65536);
-#if 0
-    this->writeBasis("a.bas",true);
-    for (int i=0;i<this->numberRows();i++)
-      printf("%d %g\n",i,this->dualRowSolution()[i]);
-    this->dual();
-    this->writeBasis("b.bas",true);
-    for (int i=0;i<this->numberRows();i++)
-      printf("%d %g\n",i,this->dualRowSolution()[i]);
-#endif
-    // switch off initialSolve flag
-    moreSpecialOptions_ &= ~16384;
-    //this->setNumberIterations(abcModel2->numberIterations()+this->numberIterations());
-    if (!keepAbc) {
-      delete abcModel2;
-      abcModel2 = NULL;
-    }
-  }
-  return abcModel2;
-}
-#endif
 /** General solve algorithm which can do presolve
     special options (bits)
     1 - do not perturb
@@ -1022,14 +720,6 @@ int ClpSimplex::initialSolve(ClpSolve &options)
 	  << CoinMessageEol;
       }
     } else {
-#if 0 //def ABC_INHERIT
-	    {
-	      AbcSimplex * abcModel2=new AbcSimplex(*model2);
-	      delete model2;
-	      model2=abcModel2;
-	      pinfo->setPresolvedModel(model2);
-	    }
-#else
       //ClpModel::stopPermanentArrays();
       //setSpecialOptions(specialOptions()&~65536);
       // try setting tolerances up
@@ -1045,7 +735,6 @@ int ClpSimplex::initialSolve(ClpSolve &options)
           model2->setDualTolerance(CLP_NEW_TOLERANCE);
         }
       }
-#endif
 #endif
       model2->eventHandler()->setSimplex(model2);
       int rcode = model2->eventHandler()->event(ClpEventHandler::presolveSize);
@@ -1538,17 +1227,13 @@ int ClpSimplex::initialSolve(ClpSolve &options)
       if (newMatrix->getIndices()) {
         // CHECKME This test of specialOptions and the one above
         // don't seem compatible.
-#ifndef ABC_INHERIT
         if ((specialOptions_ & 1024) == 0) {
           model2->replaceMatrix(newMatrix);
         } else {
-#endif
           // in integer (or abc) - just use for sprint/idiot
           saveMatrix = NULL;
           delete newMatrix;
-#ifndef ABC_INHERIT
         }
-#endif
       } else {
         handler_->message(CLP_MATRIX_CHANGE, messages_)
           << "+- 1"
@@ -1873,9 +1558,6 @@ int ClpSimplex::initialSolve(ClpSolve &options)
     }
 #endif
     if (doCrash) {
-#ifdef ABC_INHERIT
-      if (!model2->abcState()) {
-#endif
         switch (doCrash) {
           // standard
         case 1:
@@ -1899,11 +1581,6 @@ int ClpSimplex::initialSolve(ClpSolve &options)
           model2->crash(0.0, 5);
           break;
         }
-#ifdef ABC_INHERIT
-      } else if (doCrash >= 0) {
-        model2->setAbcState(model2->abcState() | 256 * doCrash);
-      }
-#endif
     }
     if (!nPasses) {
       int saveOptions = model2->specialOptions();
@@ -1922,11 +1599,7 @@ int ClpSimplex::initialSolve(ClpSolve &options)
           model2->dual(0);
           clpMatrix->releaseSpecialColumnCopy();
         } else {
-#ifndef ABC_INHERIT
           model2->dual(0);
-#else
-          model2->dealWithAbc(0, 0, interrupt);
-#endif
         }
       } else {
         model2->dual(0);
@@ -2241,9 +1914,6 @@ int ClpSimplex::initialSolve(ClpSolve &options)
         //#define LACI_TRY
 #ifndef LACI_TRY
         //if (doIdiot>0)
-#if 0 //def ABC_INHERIT
-		    if (!model2->abcState())
-#endif
         info.setStrategy(512 | info.getStrategy());
 #endif
         // Allow for scaling
@@ -2366,31 +2036,6 @@ int ClpSimplex::initialSolve(ClpSolve &options)
           }
           model2->setProblemStatus(-1);
           model2->setObjectiveScale(saveScale);
-#ifdef ABC_INHERIT
-          AbcSimplex *abcModel2 = new AbcSimplex(*model2);
-          if (interrupt)
-            currentAbcModel = abcModel2;
-          if (abcSimplex_) {
-            // move factorization stuff
-            abcModel2->factorization()->synchronize(model2->factorization(), abcModel2);
-          }
-          abcModel2->startPermanentArrays();
-          abcModel2->setAbcState(CLP_ABC_WANTED);
-#if ABC_PARALLEL
-          int parallelMode = 1;
-          printf("Parallel mode %d\n", parallelMode);
-          abcModel2->setParallelMode(parallelMode);
-#endif
-          //if (processTune>0&&processTune<8)
-          //abcModel2->setMoreSpecialOptions(abcModel2->moreSpecialOptions()|65536*processTune);
-          abcModel2->doAbcDual();
-          abcModel2->moveStatusToClp(model2);
-          //ClpModel::stopPermanentArrays();
-          model2->setSpecialOptions(model2->specialOptions() & ~65536);
-          //model2->dual();
-          //model2->setNumberIterations(abcModel2->numberIterations()+model2->numberIterations());
-          delete abcModel2;
-#endif
           memcpy(model2->objective(), saveObj, numberColumns * sizeof(double));
           //delete [] saveDuals;
           delete[] saveObj;
@@ -2447,18 +2092,10 @@ int ClpSimplex::initialSolve(ClpSolve &options)
           model2->primal(primalStartup);
           clpMatrix->releaseSpecialColumnCopy();
         } else {
-#ifndef ABC_INHERIT
 	  model2->primal(primalStartup);
-#else
-          model2->dealWithAbc(1, primalStartup, interrupt);
-#endif
         }
       } else {
-#ifndef ABC_INHERIT
         model2->primal(primalStartup);
-#else
-        model2->dealWithAbc(1, primalStartup, interrupt);
-#endif
       }
     }
 #endif
@@ -2895,18 +2532,10 @@ int ClpSimplex::initialSolve(ClpSolve &options)
           clpMatrix->releaseSpecialColumnCopy();
         } else {
 #if 1
-#ifdef ABC_INHERIT
-          //small.writeMps("try.mps");
-          if (iPass || !numberArtificials)
-            small.dealWithAbc(1, 1);
-          else
-            small.dealWithAbc(0, 0);
-#else
           if (iPass || !numberArtificials)
             small.primal(1);
           else
             small.dual(0);
-#endif
           if (emergencyMode) {
             if (small.problemStatus() == 3)
               small.setProblemStatus(0);
@@ -2953,20 +2582,12 @@ int ClpSimplex::initialSolve(ClpSolve &options)
           int nBound;
           ClpSimplex *small2 = ((ClpSimplexOther *)(&small))->crunch(rhs, whichRow, whichColumn, nBound, false, false);
           if (small2) {
-#ifdef ABC_INHERIT
-            small2->dealWithAbc(1, 1);
-#else
             small.primal(1);
-#endif
             if (small2->problemStatus() == 0) {
               small.setProblemStatus(0);
               ((ClpSimplexOther *)(&small))->afterCrunch(*small2, whichRow, whichColumn, nBound);
             } else {
-#ifdef ABC_INHERIT
-              small2->dealWithAbc(1, 1);
-#else
               small.primal(1);
-#endif
               if (small2->problemStatus())
                 small.primal(1);
             }
@@ -3126,11 +2747,7 @@ int ClpSimplex::initialSolve(ClpSolve &options)
       delete[] saveLower;
       delete[] saveUpper;
     }
-#ifdef ABC_INHERIT
-    model2->dealWithAbc(1, 1);
-#else
     model2->primal(1);
-#endif
     model2->setPerturbation(savePerturbation);
     if (model2 != originalModel2) {
       originalModel2->moveInfo(*model2);
@@ -3576,7 +3193,6 @@ int ClpSimplex::initialSolve(ClpSolve &options)
           // User did not touch preset
           model2->defaultFactorizationFrequency();
         }
-#if 1 //ndef ABC_INHERIT
   // throw some into basis
         if (!forceFixing) {
           int numberRows = model2->numberRows();
@@ -3635,15 +3251,6 @@ int ClpSimplex::initialSolve(ClpSolve &options)
             }
             //int numberRows = model2->numberRows();
             //int numberColumns = model2->numberColumns();
-#ifdef ABC_INHERIT
-            model2->checkSolution(0);
-            printf("%d primal infeasibilities summing to %g\n",
-              model2->numberPrimalInfeasibilities(),
-              model2->sumPrimalInfeasibilities());
-            model2->dealWithAbc(1, 1);
-          }
-        }
-#else
             // just primal values pass
             double saveScale = model2->objectiveScale();
             model2->setObjectiveScale(1.0e-3);
@@ -3725,20 +3332,6 @@ int ClpSimplex::initialSolve(ClpSolve &options)
         model2->primal(2);
         model2->setObjectiveScale(saveScale);
         model2->primal(1);
-#endif
-#else
-        // just primal
-#ifdef ABC_INHERIT
-        model2->checkSolution(0);
-        printf("%d primal infeasibilities summing to %g\n",
-          model2->numberPrimalInfeasibilities(),
-          model2->sumPrimalInfeasibilities());
-        model2->dealWithAbc(1, 1);
-#else
-        model2->primal(1);
-#endif
-        //model2->primal(1);
-#endif
       } else if (barrierStatus == 4) {
         // memory problems
         model2->setPerturbation(savePerturbation);
@@ -3828,14 +3421,7 @@ int ClpSimplex::initialSolve(ClpSolve &options)
       << CoinMessageEol;
     timeX = time2;
     if (!presolveToFile) {
-#if 1 //ndef ABC_INHERIT
       delete model2;
-#else
-      if (model2->abcSimplex())
-        delete model2->abcSimplex();
-      else
-        delete model2;
-#endif
     }
     if (interrupt)
       currentModel = this;
@@ -3887,7 +3473,6 @@ int ClpSimplex::initialSolve(ClpSolve &options)
             else if (savePerturbation < 100)
               setPerturbation(51); // probably better to perturb after n its
           }
-#ifndef ABC_INHERIT
           // use method thought suitable
           int numberSuperBasic = 0;
           for (int i = 0; i < numberColumns_; i++) {
@@ -3930,9 +3515,6 @@ int ClpSimplex::initialSolve(ClpSolve &options)
 	      }
 	    }
           }
-#else
-          dealWithAbc(1, 2, interrupt);
-#endif
         }
       } else {
         // just set status
@@ -3948,11 +3530,7 @@ int ClpSimplex::initialSolve(ClpSolve &options)
         << CoinMessageEol;
       timeX = time2;
     } else if (rcode > 0) { // was >= 0
-#ifdef ABC_INHERIT
-      dealWithAbc(1, 2, true);
-#else
       primal(1);
-#endif
     } else {
       secondaryStatus_ = finalSecondaryStatus;
     }
@@ -5196,73 +4774,6 @@ ClpSimplex::scaleObjective(double value)
   }
   return largest;
 }
-#if defined(ABC_INHERIT) || defined(THREADS_IN_ANALYZE)
-void *clp_parallelManager(void *stuff)
-{
-  CoinPthreadStuff *driver = reinterpret_cast< CoinPthreadStuff * >(stuff);
-  int whichThread = driver->whichThread();
-  CoinThreadInfo *threadInfo = driver->threadInfoPointer(whichThread);
-  threadInfo->status = -1;
-  int *which = threadInfo->stuff;
-#ifdef PTHREAD_BARRIER_SERIAL_THREAD
-  pthread_barrier_wait(driver->barrierPointer());
-#endif
-#if 0
-  int status=-1;
-  while (status!=100)
-    status=timedWait(driver,1000,2);
-  pthread_cond_signal(driver->conditionPointer(1));
-  pthread_mutex_unlock(driver->mutexPointer(1,whichThread));
-#endif
-  // so now mutex_ is locked
-  int whichLocked = 0;
-  while (true) {
-    pthread_mutex_t *mutexPointer = driver->mutexPointer(whichLocked, whichThread);
-    // wait
-    //printf("Child waiting for %d - status %d %d %d\n",
-    //	   whichLocked,lockedX[0],lockedX[1],lockedX[2]);
-#ifdef DETAIL_THREAD
-    printf("thread %d about to lock mutex %d\n", whichThread, whichLocked);
-#endif
-    pthread_mutex_lock(mutexPointer);
-    whichLocked++;
-    if (whichLocked == 3)
-      whichLocked = 0;
-    int unLock = whichLocked + 1;
-    if (unLock == 3)
-      unLock = 0;
-    //printf("child pointer %x status %d\n",threadInfo,threadInfo->status);
-    assert(threadInfo->status >= 0);
-    if (threadInfo->status == 1000)
-      pthread_exit(NULL);
-    int type = threadInfo->status;
-    int &returnCode = which[0];
-    int iPass = which[1];
-    ClpSimplex *clpSimplex = reinterpret_cast< ClpSimplex * >(threadInfo->extraInfo);
-    //CoinIndexedVector * array;
-    //double dummy;
-    switch (type) {
-      // dummy
-    case 0:
-      break;
-    case 1:
-      if (!clpSimplex->problemStatus() || !iPass)
-        returnCode = clpSimplex->dual();
-      else
-        returnCode = clpSimplex->primal();
-      break;
-    case 100:
-      // initialization
-      break;
-    }
-    threadInfo->status = -1;
-#ifdef DETAIL_THREAD
-    printf("thread %d about to unlock mutex %d\n", whichThread, unLock);
-#endif
-    pthread_mutex_unlock(driver->mutexPointer(unLock, whichThread));
-  }
-}
-#endif
 // Solve using Dantzig-Wolfe decomposition and maybe in parallel
 int ClpSimplex::solveDW(CoinStructuredModel *model, ClpSolve &options)
 {
@@ -5536,19 +5047,6 @@ int ClpSimplex::solveDW(CoinStructuredModel *model, ClpSolve &options)
   handler_->message(CLP_GENERAL, messages_)
     << generalPrint
     << CoinMessageEol;
-#ifdef ABC_INHERIT
-  //AbcSimplex abcMaster;
-  //if (!this->abcState())
-  //setAbcState(1);
-  int numberCpu = std::min((this->abcState() & 15), 4);
-  CoinPthreadStuff threadInfo(numberCpu, clp_parallelManager);
-  master.setAbcState(this->abcState());
-  //AbcSimplex * tempMaster=master.dealWithAbc(2,10,true);
-  //abcMaster=*tempMaster;
-  //delete tempMaster;
-  //abcMaster.startThreads(numberCpu);
-  //#define master abcMaster
-#endif
   for (iPass = 0; iPass < maxPass; iPass++) {
     sprintf(generalPrint, "Start of pass %d", iPass);
     handler_->message(CLP_GENERAL, messages_)
@@ -5620,11 +5118,7 @@ int ClpSimplex::solveDW(CoinStructuredModel *model, ClpSolve &options)
       }
       printf("** suminf %g\n", sum);
     }
-#ifdef ABC_INHERIT
-    master.dealWithAbc(1, 0, true);
-#else
     master.primal();
-#endif
     //master.primal(1);
     // Correct artificials
     sumArtificials = 0.0;
@@ -5638,11 +5132,7 @@ int ClpSimplex::solveDW(CoinStructuredModel *model, ClpSolve &options)
     master.scaleObjective(scaleFactor);
     int problemStatus = master.status(); // do here as can change (delcols)
     if (problemStatus == 2 && master.numberColumns()) {
-#ifdef ABC_INHERIT
-      master.dealWithAbc(1, 1, true);
-#else
       master.primal(1);
-#endif
       //master.primal(1);
       if (problemStatus == 2) {
         int numberColumns = master.numberColumns();
@@ -5652,11 +5142,7 @@ int ClpSimplex::solveDW(CoinStructuredModel *model, ClpSolve &options)
           lower[i] = std::max(lower[i], -1.0e10);
           upper[i] = std::min(upper[i], 1.0e10);
         }
-#ifdef ABC_INHERIT
-        master.dealWithAbc(1, 1, true);
-#else
         master.primal(1);
-#endif
         //master.primal(1);
         assert(problemStatus != 2);
       }
@@ -5749,9 +5235,6 @@ int ClpSimplex::solveDW(CoinStructuredModel *model, ClpSolve &options)
       if (reducePrint)
         sub[iBlock].setLogLevel(0);
     }
-#if defined(ABC_INHERIT)
-    if (numberCpu < 2) {
-#endif
       for (iBlock = 0; iBlock < numberBlocks; iBlock++) {
         if (iPass) {
           sub[iBlock].primal();
@@ -5759,24 +5242,6 @@ int ClpSimplex::solveDW(CoinStructuredModel *model, ClpSolve &options)
           sub[iBlock].dual();
         }
       }
-#if defined(ABC_INHERIT)
-    } else {
-      int iBlock = 0;
-      while (iBlock < numberBlocks) {
-        if (sub[iBlock].secondaryStatus() != 99 || true) {
-          int iThread;
-          threadInfo.waitParallelTask(1, iThread, true);
-#ifdef DETAIL_THREAD
-          printf("Starting block %d on thread %d\n",
-            iBlock, iThread);
-#endif
-          threadInfo.startParallelTask(1, iThread, sub + iBlock);
-        }
-        iBlock++;
-      }
-      threadInfo.waitAllTasks();
-    }
-#endif
     for (iBlock = 0; iBlock < numberBlocks; iBlock++) {
       int numberColumns2 = sub[iBlock].numberColumns();
       double *saveObj = saveObj2[iBlock];
@@ -6514,19 +5979,6 @@ int ClpSimplex::solveBenders(CoinStructuredModel *model, ClpSolve &options)
       memcpy(save, sub[iBlock].columnUpper(), numberColumns2 * sizeof(double));
     }
   }
-#ifdef ABC_INHERIT
-  //AbcSimplex abcMaster;
-  //if (!this->abcState())
-  //setAbcState(1);
-  int numberCpu = std::min((this->abcState() & 15), 4);
-  CoinPthreadStuff threadInfo(numberCpu, clp_parallelManager);
-  masterModel.setAbcState(this->abcState());
-  //AbcSimplex * tempMaster=masterModel.dealWithAbc(2,10,true);
-  //abcMaster=*tempMaster;
-  //delete tempMaster;
-  //abcMaster.startThreads(numberCpu);
-  //#define masterModel abcMaster
-#endif
   double treatSubAsFeasible = 1.0e-6;
   int numberSubInfeasible = 0;
   bool canSkipSubSolve = false;
@@ -6570,11 +6022,7 @@ int ClpSimplex::solveBenders(CoinStructuredModel *model, ClpSolve &options)
 #ifdef TRY_NO_SCALING
     masterModel.scaling(0);
 #endif
-#ifdef ABC_INHERIT
-    masterModel.dealWithAbc(0, 0, true);
-#else
     masterModel.dual();
-#endif
     if ((maxPass == 5000 && scalingFlag_) || (maxPass == 4000 && !scalingFlag_)) {
       int n = masterModel.numberIterations();
       masterModel.scaling(0);
@@ -6594,11 +6042,7 @@ int ClpSimplex::solveBenders(CoinStructuredModel *model, ClpSolve &options)
       // unbounded
       masterModel.writeMps("unbounded.mps");
       // get primal feasible
-#ifdef ABC_INHERIT
-      masterModel.dealWithAbc(1, 1, true);
-#else
       masterModel.primal();
-#endif
       const double *fullLower = columnLower();
       const double *fullUpper = columnUpper();
       double *lower = masterModel.columnLower();
@@ -6631,11 +6075,7 @@ int ClpSimplex::solveBenders(CoinStructuredModel *model, ClpSolve &options)
         abort(); // probably can happen
       }
       numberTimesUnbounded++;
-#ifdef ABC_INHERIT
-      masterModel.dealWithAbc(0, 0, true);
-#else
       masterModel.dual();
-#endif
       masterStatus = masterModel.status();
       assert(!masterStatus);
       masterModel.setNumberIterations(1); // so will continue
@@ -6907,14 +6347,7 @@ int ClpSimplex::solveBenders(CoinStructuredModel *model, ClpSolve &options)
 #ifdef TRY_NO_SCALING
       sub[0].scaling(0);
 #endif
-#ifdef ABC_INHERIT
-      sub[0].setAbcState(numberCpu);
-      //sub[0].dealWithAbc(0,0,true);
-      sub[0].dealWithAbc(1, 1, true);
-      sub[0].setAbcState(0);
-#else
       sub[0].dual();
-#endif
       if ((maxPass == 5000 && scalingFlag_) || (maxPass == 4000 && !scalingFlag_)) {
         int n = sub[0].numberIterations();
         sub[0].scaling(0);
@@ -6955,9 +6388,6 @@ int ClpSimplex::solveBenders(CoinStructuredModel *model, ClpSolve &options)
       // mark
       sub[0].setSecondaryStatus(99);
     }
-#ifdef ABC_INHERIT
-    if (numberCpu < 2) {
-#endif
       numberSubInfeasible = 0;
       for (iBlock = 0; iBlock < numberBlocks; iBlock++) {
 #ifdef TRY_NO_SCALING
@@ -7065,24 +6495,6 @@ int ClpSimplex::solveBenders(CoinStructuredModel *model, ClpSolve &options)
           //assert (!sub[iBlock].numberIterations()||ix!=99);
         }
       }
-#ifdef ABC_INHERIT
-    } else {
-      int iBlock = 0;
-      while (iBlock < numberBlocks) {
-        if (sub[iBlock].secondaryStatus() != 99) {
-          int iThread;
-          threadInfo.waitParallelTask(1, iThread, true);
-#ifdef DETAIL_THREAD
-          printf("Starting block %d on thread %d\n",
-            iBlock, iThread);
-#endif
-          threadInfo.startParallelTask(1, iThread, sub + iBlock);
-        }
-        iBlock++;
-      }
-      threadInfo.waitAllTasks();
-    }
-#endif
     for (iBlock = 0; iBlock < numberBlocks; iBlock++) {
       if (!iPass)
         problemState[iBlock] |= 4; // force actions
@@ -8012,11 +7424,7 @@ int ClpSimplex::solveBenders(CoinStructuredModel *model, ClpSolve &options)
   handler_->message(CLP_GENERAL, messages_)
     << generalPrint
     << CoinMessageEol;
-#ifdef ABC_INHERIT
-  this->dealWithAbc(1, 1, true);
-#else
   this->primal(1);
-#endif
   sprintf(generalPrint, "Total time %.2f seconds", CoinCpuTime() - time1);
   handler_->message(CLP_GENERAL, messages_)
     << generalPrint

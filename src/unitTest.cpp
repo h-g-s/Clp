@@ -24,12 +24,6 @@
 #include "CoinTime.hpp"
 #include "CoinFloatEqual.hpp"
 
-#if CLP_HAS_ABC
-#include "CoinAbcCommon.hpp"
-#endif
-#ifdef ABC_INHERIT
-#include "CoinAbcFactorization.hpp"
-#endif
 #include "ClpFactorization.hpp"
 #include "ClpSimplex.hpp"
 #include "ClpSimplexOther.hpp"
@@ -277,12 +271,7 @@ int loSizeX = -1;
 int hiSizeX = 1000000;
 #endif
 //----------------------------------------------------------------
-#ifndef ABC_INHERIT
 #define AnySimplex ClpSimplex
-#else
-#include "AbcSimplex.hpp"
-#define AnySimplex AbcSimplex
-#endif
 int mainTest(int argc, const char *argv[], int algorithm,
   AnySimplex empty, ClpSolve solveOptionsIn,
   int switchOffValue, bool doVector)

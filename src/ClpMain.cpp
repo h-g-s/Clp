@@ -278,11 +278,7 @@ main(int argc, const char *argv[])
   test_lapack(n);
   return 0;
 #endif
-#ifndef ABC_INHERIT
   ClpSimplex model;
-#else
-  AbcSimplex model;
-#endif
   ClpMain0(model);
   ClpOutput::printSolverHeader(model.messageHandler(), model.logLevel(),
     argc, argv);

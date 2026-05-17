@@ -1234,51 +1234,6 @@ int OsiSolverInterface::readMps(const char *filename,
   }
   return numberErrors;
 }
-/* Read a problem in GMPL format from the given filenames.
-
-
-  Will only work if glpk installed
-*/
-#ifdef COINUTILS_HAS_GLPK
-int OsiSolverInterface::readGMPL(const char *filename, const char *dataname)
-{
-  CoinMpsIO m;
-  m.setInfinity(getInfinity());
-  m.passInMessageHandler(handler_);
-
-  int numberErrors = m.readGMPL(filename, dataname, false);
-  handler_->message(COIN_SOLVER_MPS, messages_)
-    << m.getProblemName() << numberErrors << CoinMessageEol;
-  if (!numberErrors) {
-
-    // set objective function offest
-    setDblParam(OsiObjOffset, m.objectiveOffset());
-
-    // set problem name
-    setStrParam(OsiProbName, m.getProblemName());
-
-    // no errors --- load problem, set names and integrality
-    loadProblem(*m.getMatrixByCol(), m.getColLower(), m.getColUpper(),
-      m.getObjCoefficients(), m.getRowSense(), m.getRightHandSide(),
-      m.getRowRange());
-    setRowColNames(m);
-    const char *integer = m.integerColumns();
-    if (integer) {
-      int i, n = 0;
-      int nCols = m.getNumCols();
-      int *index = new int[nCols];
-      for (i = 0; i < nCols; i++) {
-        if (integer[i]) {
-          index[n++] = i;
-        }
-      }
-      setInteger(index, n);
-      delete[] index;
-    }
-  }
-  return numberErrors;
-}
-#endif
 /* Read a problem in MPS format from the given full filename.
 
 

@@ -1579,16 +1579,6 @@ public:
   virtual int readMps(const char *filename, const char *extension,
     int &numberSets, CoinSet **&sets);
 
-  /*! \brief Read a problem in GMPL format from the given filenames.
-
-
-      The default implementation uses CoinMpsIO::readGMPL(). This capability
-      is available only if the third-party package Glpk is installed.
-    */
-#ifdef COINUTILS_HAS_GLPK
-  virtual int readGMPL(const char *filename, const char *dataname = NULL);
-#endif
-
 
   /*! \brief Write the problem in MPS format to the specified file.
 

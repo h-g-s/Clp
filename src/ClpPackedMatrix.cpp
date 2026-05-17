@@ -9,10 +9,6 @@
 #include "CoinHelperFunctions.hpp"
 // #define THREAD
 // #define FAKE_CILK
-#if ABOCA_LITE
-// 1 is not owner of abcState_
-#define ABCSTATE_LITE 1
-#endif
 #include "ClpSimplex.hpp"
 #include "ClpSimplexDual.hpp"
 #include "ClpFactorization.hpp"
@@ -334,31 +330,6 @@ void ClpPackedMatrix::times(double scalar,
     }
   }
 }
-#if ABOCA_LITE
-static void
-transposeTimesBit(clpTempInfo &info)
-{
-  const CoinBigIndex *COIN_RESTRICT columnStart = info.start;
-  const int *COIN_RESTRICT row = info.row;
-  const double *COIN_RESTRICT elementByColumn = info.element;
-  double *COIN_RESTRICT y = info.spare;
-  const double *COIN_RESTRICT x = info.work;
-  int first = info.startColumn;
-  int last = first + info.numberToDo;
-  CoinBigIndex start = columnStart[first];
-  for (int iColumn = first; iColumn < last; iColumn++) {
-    CoinBigIndex j;
-    CoinBigIndex next = columnStart[iColumn + 1];
-    double value = y[iColumn];
-    for (j = start; j < next; j++) {
-      int jRow = row[j];
-      value -= x[jRow] * elementByColumn[j];
-    }
-    start = next;
-    y[iColumn] = value;
-  }
-}
-#endif
 void ClpPackedMatrix::transposeTimes(double scalar,
   const double *COIN_RESTRICT x, double *COIN_RESTRICT y) const
 {
@@ -369,28 +340,6 @@ void ClpPackedMatrix::transposeTimes(double scalar,
   const double *COIN_RESTRICT elementByColumn = matrix_->getElements();
   if (!(flags_ & 2)) {
     if (scalar == -1.0) {
-#if ABOCA_LITE
-      int numberThreads = abcState();
-      if (numberThreads) {
-        clpTempInfo info[ABOCA_LITE];
-        int chunk = (numberActiveColumns_ + numberThreads - 1) / numberThreads;
-        int n = 0;
-        for (int i = 0; i < numberThreads; i++) {
-          info[i].spare = y;
-          info[i].work = const_cast< double * >(x);
-          info[i].startColumn = n;
-          info[i].element = elementByColumn;
-          info[i].start = columnStart;
-          info[i].row = row;
-          info[i].numberToDo = std::min(chunk, numberActiveColumns_ - n);
-          n += chunk;
-        }
-        for (int i = 0; i < numberThreads; i++) {
-          cilk_spawn transposeTimesBit(info[i]);
-        }
-        cilk_sync;
-      } else {
-#endif
         CoinBigIndex start = columnStart[0];
         for (iColumn = 0; iColumn < numberActiveColumns_; iColumn++) {
           CoinBigIndex j;
@@ -403,9 +352,6 @@ void ClpPackedMatrix::transposeTimes(double scalar,
           start = next;
           y[iColumn] = value;
         }
-#if ABOCA_LITE
-      }
-#endif
     } else {
       CoinBigIndex start = columnStart[0];
       for (iColumn = 0; iColumn < numberActiveColumns_; iColumn++) {
@@ -584,33 +530,6 @@ void ClpPackedMatrix::transposeTimes(double scalar,
     transposeTimes(scalar, x, y);
   }
 }
-#if ABOCA_LITE
-static void
-transposeTimesSubsetBit(clpTempInfo &info)
-{
-  const CoinBigIndex *COIN_RESTRICT columnStart = info.start;
-  const int *COIN_RESTRICT row = info.row;
-  const double *COIN_RESTRICT elementByColumn = info.element;
-  double *COIN_RESTRICT y = info.spare;
-  const double *COIN_RESTRICT x = info.work;
-  const int *COIN_RESTRICT which = info.which;
-  int first = info.startColumn;
-  int last = first + info.numberToDo;
-  for (int i = first; i < last; i++) {
-    int iColumn = which[i];
-    CoinBigIndex j;
-    CoinBigIndex start = columnStart[iColumn];
-    CoinBigIndex next = columnStart[iColumn + 1];
-    double value = 0.0;
-    for (j = start; j < next; j++) {
-      int jRow = row[j];
-      value += x[jRow] * elementByColumn[j];
-    }
-    start = next;
-    y[iColumn] -= value;
-  }
-}
-#endif
 void ClpPackedMatrix::transposeTimesSubset(int number,
   const int *COIN_RESTRICT which,
   const double *COIN_RESTRICT x, double *COIN_RESTRICT y,
@@ -637,29 +556,6 @@ void ClpPackedMatrix::transposeTimesSubset(int number,
         y[iColumn] -= value * columnScale[iColumn];
       }
     } else {
-#if ABOCA_LITE
-      int numberThreads = abcState();
-      if (numberThreads) {
-        clpTempInfo info[ABOCA_LITE];
-        int chunk = (number + numberThreads - 1) / numberThreads;
-        int n = 0;
-        for (int i = 0; i < numberThreads; i++) {
-          info[i].spare = y;
-          info[i].work = const_cast< double * >(x);
-          info[i].which = const_cast< int * >(which);
-          info[i].startColumn = n;
-          info[i].element = elementByColumn;
-          info[i].start = columnStart;
-          info[i].row = row;
-          info[i].numberToDo = std::min(chunk, number - n);
-          n += chunk;
-        }
-        for (int i = 0; i < numberThreads; i++) {
-          cilk_spawn transposeTimesSubsetBit(info[i]);
-        }
-        cilk_sync;
-      } else {
-#endif
         for (int jColumn = 0; jColumn < number; jColumn++) {
           int iColumn = which[jColumn];
           CoinBigIndex j;
@@ -672,9 +568,6 @@ void ClpPackedMatrix::transposeTimesSubset(int number,
           }
           y[iColumn] -= value;
         }
-#if ABOCA_LITE
-      }
-#endif
     }
   } else {
     // can use spare region
@@ -1582,60 +1475,6 @@ int ClpPackedMatrix::gutsOfTransposeTimesScaled(const double *COIN_RESTRICT pi,
   }
   return numberNonZero;
 }
-#if ABOCA_LITE
-static void
-transposeTimesUnscaledBit(clpTempInfo &info)
-{
-  const CoinBigIndex *COIN_RESTRICT columnStart = info.start;
-  const int *COIN_RESTRICT row = info.row;
-  const double *COIN_RESTRICT elementByColumn = info.element;
-  double *COIN_RESTRICT array = info.infeas;
-  int *COIN_RESTRICT index = info.which;
-  const unsigned char *COIN_RESTRICT status = info.status;
-  double zeroTolerance = info.tolerance;
-  const double *COIN_RESTRICT pi = info.work;
-  int first = info.startColumn;
-  int last = first + info.numberToDo;
-  double value = 0.0;
-  int jColumn = -1;
-  int numberNonZero = 0;
-  for (int iColumn = first; iColumn < last; iColumn++) {
-    bool wanted = ((status[iColumn] & 3) != 1);
-    if (fabs(value) > zeroTolerance) {
-      array[numberNonZero] = value;
-      index[numberNonZero++] = jColumn;
-    }
-    value = 0.0;
-    if (wanted) {
-      CoinBigIndex start = columnStart[iColumn];
-      CoinBigIndex end = columnStart[iColumn + 1];
-      jColumn = iColumn;
-      int n = static_cast< int >(end - start);
-      bool odd = (n & 1) != 0;
-      n = n >> 1;
-      const int *COIN_RESTRICT rowThis = row + start;
-      const double *COIN_RESTRICT elementThis = elementByColumn + start;
-      for (; n; n--) {
-        int iRow0 = *rowThis;
-        int iRow1 = *(rowThis + 1);
-        rowThis += 2;
-        value += pi[iRow0] * (*elementThis);
-        value += pi[iRow1] * (*(elementThis + 1));
-        elementThis += 2;
-      }
-      if (odd) {
-        int iRow = *rowThis;
-        value += pi[iRow] * (*elementThis);
-      }
-    }
-  }
-  if (fabs(value) > zeroTolerance) {
-    array[numberNonZero] = value;
-    index[numberNonZero++] = jColumn;
-  }
-  info.numberAdded = numberNonZero;
-}
-#endif
 // Meat of transposeTimes by column when not scaled
 int ClpPackedMatrix::gutsOfTransposeTimesUnscaled(const double *COIN_RESTRICT pi,
   int *COIN_RESTRICT index,
@@ -1648,34 +1487,6 @@ int ClpPackedMatrix::gutsOfTransposeTimesUnscaled(const double *COIN_RESTRICT pi
   const int *COIN_RESTRICT row = matrix_->getIndices();
   const CoinBigIndex *COIN_RESTRICT columnStart = matrix_->getVectorStarts();
   const double *COIN_RESTRICT elementByColumn = matrix_->getElements();
-#if ABOCA_LITE
-  int numberThreads = abcState();
-  if (numberThreads) {
-    clpTempInfo info[ABOCA_LITE];
-    int chunk = (numberActiveColumns_ + numberThreads - 1) / numberThreads;
-    int n = 0;
-    for (int i = 0; i < numberThreads; i++) {
-      info[i].which = index + n;
-      info[i].infeas = array + n;
-      info[i].work = const_cast< double * >(pi);
-      info[i].status = const_cast< unsigned char * >(status);
-      info[i].startColumn = n;
-      info[i].element = elementByColumn;
-      info[i].start = columnStart;
-      info[i].row = row;
-      info[i].numberToDo = std::min(chunk, numberActiveColumns_ - n);
-      info[i].tolerance = zeroTolerance;
-      n += chunk;
-    }
-    for (int i = 0; i < numberThreads; i++) {
-      cilk_spawn transposeTimesUnscaledBit(info[i]);
-    }
-    cilk_sync;
-    for (int i = 0; i < numberThreads; i++)
-      numberNonZero += info[i].numberAdded;
-    moveAndZero(info, 2, NULL);
-  } else {
-#endif
     double value = 0.0;
     int jColumn = -1;
     for (int iColumn = 0; iColumn < numberActiveColumns_; iColumn++) {
@@ -1712,88 +1523,8 @@ int ClpPackedMatrix::gutsOfTransposeTimesUnscaled(const double *COIN_RESTRICT pi
       array[numberNonZero] = value;
       index[numberNonZero++] = jColumn;
     }
-#if ABOCA_LITE
-  }
-#endif
   return numberNonZero;
 }
-#if ABOCA_LITE
-static void
-transposeTimesUnscaledBit2(clpTempInfo &info)
-{
-  const CoinBigIndex *COIN_RESTRICT columnStart = info.start;
-  const int *COIN_RESTRICT row = info.row;
-  const double *COIN_RESTRICT elementByColumn = info.element;
-  double *COIN_RESTRICT array = info.infeas;
-  const double *COIN_RESTRICT reducedCost = info.reducedCost;
-  int *COIN_RESTRICT index = info.which;
-  double *COIN_RESTRICT spareArray = info.spare;
-  int *COIN_RESTRICT spareIndex = info.index;
-  const unsigned char *COIN_RESTRICT status = info.status;
-  double zeroTolerance = info.tolerance;
-  double dualTolerance = info.dualTolerance;
-  double acceptablePivot = info.acceptablePivot;
-  const double *COIN_RESTRICT pi = info.work;
-  double tentativeTheta = 1.0e15;
-  int numberRemaining = 0;
-  double upperTheta = info.upperTheta;
-  int first = info.startColumn;
-  int last = first + info.numberToDo;
-  int numberNonZero = 0;
-  double multiplier[] = { -1.0, 1.0 };
-  double dualT = -dualTolerance;
-  for (int iColumn = first; iColumn < last; iColumn++) {
-    int wanted = (status[iColumn] & 3) - 1;
-    if (wanted) {
-      double value = 0.0;
-      CoinBigIndex start = columnStart[iColumn];
-      CoinBigIndex end = columnStart[iColumn + 1];
-      int n = static_cast< int >(end - start);
-      bool odd = (n & 1) != 0;
-      n = n >> 1;
-      const int *COIN_RESTRICT rowThis = row + start;
-      const double *COIN_RESTRICT elementThis = elementByColumn + start;
-      for (; n; n--) {
-        int iRow0 = *rowThis;
-        int iRow1 = *(rowThis + 1);
-        rowThis += 2;
-        value += pi[iRow0] * (*elementThis);
-        value += pi[iRow1] * (*(elementThis + 1));
-        elementThis += 2;
-      }
-      if (odd) {
-        int iRow = *rowThis;
-        value += pi[iRow] * (*elementThis);
-      }
-      if (fabs(value) > zeroTolerance) {
-        array[numberNonZero] = value;
-        index[numberNonZero++] = iColumn;
-        if (wanted > 0) {
-          double mult = multiplier[wanted - 1];
-          double alpha = value * mult;
-          if (alpha > 0.0) {
-            double oldValue = reducedCost[iColumn] * mult;
-            double value = oldValue - tentativeTheta * alpha;
-            if (value < dualT) {
-              value = oldValue - upperTheta * alpha;
-              if (value < dualT && alpha >= acceptablePivot) {
-                upperTheta = (oldValue - dualT) / alpha;
-                // tentativeTheta = std::min(2.0*upperTheta,tentativeTheta);
-              }
-              // add to list
-              spareArray[numberRemaining] = alpha * mult;
-              spareIndex[numberRemaining++] = iColumn;
-            }
-          }
-        }
-      }
-    }
-  }
-  info.numberAdded = numberNonZero;
-  info.numberRemaining = numberRemaining;
-  info.upperTheta = upperTheta;
-}
-#endif
 /* Meat of transposeTimes by column when not scaled and skipping
    and doing part of dualColumn */
 int ClpPackedMatrix::gutsOfTransposeTimesUnscaled(const double *COIN_RESTRICT pi,
@@ -1816,44 +1547,6 @@ int ClpPackedMatrix::gutsOfTransposeTimesUnscaled(const double *COIN_RESTRICT pi
   const int *COIN_RESTRICT row = matrix_->getIndices();
   const CoinBigIndex *COIN_RESTRICT columnStart = matrix_->getVectorStarts();
   const double *COIN_RESTRICT elementByColumn = matrix_->getElements();
-#if ABOCA_LITE
-  int numberThreads = abcState();
-  if (numberThreads) {
-    clpTempInfo info[ABOCA_LITE];
-    int chunk = (numberActiveColumns_ + numberThreads - 1) / numberThreads;
-    int n = 0;
-    for (int i = 0; i < numberThreads; i++) {
-      info[i].upperTheta = upperThetaP;
-      info[i].acceptablePivot = acceptablePivot;
-      info[i].reducedCost = const_cast< double * >(reducedCost);
-      info[i].index = spareIndex + n + numberRemaining;
-      info[i].spare = spareArray + n + numberRemaining;
-      info[i].which = index + n;
-      info[i].infeas = array + n;
-      info[i].work = const_cast< double * >(pi);
-      info[i].status = const_cast< unsigned char * >(status);
-      info[i].startColumn = n;
-      info[i].element = elementByColumn;
-      info[i].start = columnStart;
-      info[i].row = row;
-      info[i].numberToDo = std::min(chunk, numberActiveColumns_ - n);
-      info[i].tolerance = zeroTolerance;
-      info[i].dualTolerance = dualTolerance;
-      n += chunk;
-    }
-    for (int i = 0; i < numberThreads; i++) {
-      cilk_spawn transposeTimesUnscaledBit2(info[i]);
-    }
-    cilk_sync;
-    for (int i = 0; i < numberThreads; i++) {
-      numberNonZero += info[i].numberAdded;
-      numberRemaining += info[i].numberRemaining;
-      upperTheta = std::min(upperTheta, static_cast< double >(info[i].upperTheta));
-    }
-    moveAndZero(info, 1, NULL);
-    moveAndZero(info, 2, NULL);
-  } else {
-#endif
     double tentativeTheta = 1.0e15;
     double multiplier[] = { -1.0, 1.0 };
     double dualT = -dualTolerance;
@@ -1984,9 +1677,6 @@ int ClpPackedMatrix::gutsOfTransposeTimesUnscaled(const double *COIN_RESTRICT pi
         }
       }
     }
-#if ABOCA_LITE
-  }
-#endif
   numberRemainingP = numberRemaining;
   upperThetaP = upperTheta;
   return numberNonZero;
@@ -2030,29 +1720,6 @@ int ClpPackedMatrix::gutsOfTransposeTimesScaled(const double *COIN_RESTRICT pi,
   }
   return numberNonZero;
 }
-#if ABOCA_LITE
-static void
-packDownBit(clpTempInfo &info)
-{
-  double *COIN_RESTRICT output = info.infeas;
-  int *COIN_RESTRICT index = info.which;
-  double zeroTolerance = info.tolerance;
-  int first = info.startColumn;
-  int last = info.numberToDo;
-  int numberNonZero = 0;
-  for (int i = 0; i < last; i++) {
-    double value = output[i];
-    if (value) {
-      output[i] = 0.0;
-      if (fabs(value) > zeroTolerance) {
-        output[numberNonZero] = value;
-        index[numberNonZero++] = i + first;
-      }
-    }
-  }
-  info.numberAdded = numberNonZero;
-}
-#endif
 // Meat of transposeTimes by row n > K if packed - returns number nonzero
 int ClpPackedMatrix::gutsOfTransposeTimesByRowGEK(const CoinIndexedVector *COIN_RESTRICT piVector,
   int *COIN_RESTRICT index,
@@ -2089,30 +1756,6 @@ int ClpPackedMatrix::gutsOfTransposeTimesByRowGEK(const CoinIndexedVector *COIN_
   }
   // get rid of tiny values and count
   int numberNonZero = 0;
-#if ABOCA_LITE
-  int numberThreads = abcState();
-  if (numberThreads) {
-    clpTempInfo info[ABOCA_LITE];
-    int chunk = (numberColumns + numberThreads - 1) / numberThreads;
-    int n = 0;
-    for (int i = 0; i < numberThreads; i++) {
-      info[i].which = index + n;
-      info[i].infeas = output + n;
-      info[i].startColumn = n;
-      info[i].numberToDo = std::min(chunk, numberColumns - n);
-      info[i].tolerance = tolerance;
-      n += chunk;
-    }
-    for (int i = 0; i < numberThreads; i++) {
-      cilk_spawn packDownBit(info[i]);
-    }
-    cilk_sync;
-    for (int i = 0; i < numberThreads; i++) {
-      numberNonZero += info[i].numberAdded;
-    }
-    moveAndZero(info, 2, NULL);
-  } else {
-#endif
     for (int i = 0; i < numberColumns; i++) {
       double value = output[i];
       if (value) {
@@ -2123,9 +1766,6 @@ int ClpPackedMatrix::gutsOfTransposeTimesByRowGEK(const CoinIndexedVector *COIN_
         }
       }
     }
-#if ABOCA_LITE
-  }
-#endif
 #ifndef NDEBUG
   for (int i = numberNonZero; i < numberColumns; i++)
     assert(!output[i]);
@@ -2401,222 +2041,6 @@ bool ClpPackedMatrix::canCombine(const ClpSimplex *model,
 // These have to match ClpPrimalColumnSteepest version
 #define reference(i) (((reference[i >> 5] >> (i & 31)) & 1) != 0)
 #endif
-#if ABOCA_LITE
-static void
-transposeTimes2UnscaledBit(clpTempInfo &info)
-{
-  const CoinBigIndex *COIN_RESTRICT columnStart = info.start;
-  const int *COIN_RESTRICT row = info.row;
-  const double *COIN_RESTRICT elementByColumn = info.element;
-  double *COIN_RESTRICT array = info.infeas;
-  double *COIN_RESTRICT weights = const_cast< double * >(info.lower);
-  double *COIN_RESTRICT reducedCost = info.reducedCost;
-  double *COIN_RESTRICT infeas = const_cast< double * >(info.upper);
-  int *COIN_RESTRICT index = info.which;
-  unsigned int *COIN_RESTRICT reference = reinterpret_cast< unsigned int * >(info.index);
-  const unsigned char *COIN_RESTRICT status = info.status;
-  double zeroTolerance = info.tolerance;
-  double dualTolerance = info.dualTolerance;
-  const double *COIN_RESTRICT pi = info.work;
-  const double *COIN_RESTRICT piWeight = info.cost;
-  double scaleFactor = info.primalRatio;
-  double devex = info.changeObj;
-  double referenceIn = info.theta;
-  int first = info.startColumn;
-  int last = first + info.numberToDo;
-  int killDjs = info.numberInfeasibilities;
-  int numberNonZero = 0;
-  double mmult[2] = { 1.0, -1.0 };
-  for (int iColumn = first; iColumn < last; iColumn++) {
-    int iStat = status[iColumn] & 7;
-    if (iStat != 1 && iStat != 5) {
-      double value = 0.0;
-      CoinBigIndex start = columnStart[iColumn];
-      CoinBigIndex end = columnStart[iColumn + 1];
-      int n = static_cast< int >(end - start);
-      const int *COIN_RESTRICT rowThis = row + start;
-      const double *COIN_RESTRICT elementThis = elementByColumn + start;
-      for (int i = 0; i < n; i++) {
-        int iRow = rowThis[i];
-        value -= pi[iRow] * elementThis[i];
-      }
-      if (fabs(value) > zeroTolerance) {
-        // and do other array
-        double modification = 0.0;
-        for (int i = 0; i < n; i++) {
-          int iRow = rowThis[i];
-          modification += piWeight[iRow] * elementThis[i];
-        }
-        double thisWeight = weights[iColumn];
-        double oldWeight = thisWeight;
-        double pivot = value * scaleFactor;
-        double pivotSquared = pivot * pivot;
-        thisWeight += pivotSquared * devex + pivot * modification;
-        // debug3(iColumn, thisWeight, pivotSquared, devex, pivot, modification, oldWeight);
-        if (thisWeight < DEVEX_TRY_NORM) {
-          if (referenceIn < 0.0) {
-            // steepest
-            thisWeight = std::max(DEVEX_TRY_NORM, DEVEX_ADD_ONE + pivotSquared);
-          } else {
-            // exact
-            thisWeight = referenceIn * pivotSquared;
-            if (reference(iColumn))
-              thisWeight += 1.0;
-            thisWeight = std::max(thisWeight, DEVEX_TRY_NORM);
-          }
-        }
-        weights[iColumn] = thisWeight;
-        if (!killDjs) {
-          value = reducedCost[iColumn] - value;
-          reducedCost[iColumn] = value;
-          if (iStat > 1 && iStat < 4) {
-            value *= mmult[iStat - 2];
-            if (value <= dualTolerance)
-              value = 0.0;
-          } else {
-            // free or super basic
-            if (fabs(value) > FREE_ACCEPT * dualTolerance) {
-              // we are going to bias towards free (but only if reasonable)
-              value *= FREE_BIAS;
-            } else {
-              value = 0.0;
-            }
-          }
-          if (value) {
-            value *= value;
-            // store square in list
-            if (infeas[iColumn]) {
-              infeas[iColumn] = value; // already there
-            } else {
-              array[numberNonZero] = value;
-              index[numberNonZero++] = iColumn;
-            }
-          } else {
-            array[numberNonZero] = 0.0;
-            index[numberNonZero++] = iColumn;
-          }
-        }
-      }
-    }
-  }
-  info.numberAdded = numberNonZero;
-}
-static void
-transposeTimes2ScaledBit(clpTempInfo &info)
-{
-  const CoinBigIndex *COIN_RESTRICT columnStart = info.start;
-  const int *COIN_RESTRICT row = info.row;
-  const double *COIN_RESTRICT elementByColumn = info.element;
-  double *COIN_RESTRICT array = info.infeas;
-  double *COIN_RESTRICT weights = const_cast< double * >(info.lower);
-  int *COIN_RESTRICT index = info.which;
-  unsigned int *COIN_RESTRICT reference = reinterpret_cast< unsigned int * >(info.index);
-  const unsigned char *COIN_RESTRICT status = info.status;
-  double zeroTolerance = info.tolerance;
-  double dualTolerance = info.dualTolerance;
-  double *COIN_RESTRICT reducedCost = info.reducedCost;
-  double *COIN_RESTRICT infeas = const_cast< double * >(info.upper);
-  const double *COIN_RESTRICT pi = info.work;
-  const double *COIN_RESTRICT piWeight = info.cost;
-  const double *COIN_RESTRICT columnScale = info.solution;
-  double scaleFactor = info.primalRatio;
-  double devex = info.changeObj;
-  double referenceIn = info.theta;
-  int first = info.startColumn;
-  int last = first + info.numberToDo;
-  int killDjs = info.numberInfeasibilities;
-  int numberNonZero = 0;
-  double mmult[2] = { 1.0, -1.0 };
-  for (int iColumn = first; iColumn < last; iColumn++) {
-    int iStat = status[iColumn] & 7;
-    if (iStat != 1 && iStat != 5) {
-      double value = 0.0;
-      double scale = columnScale[iColumn];
-      CoinBigIndex start = columnStart[iColumn];
-      CoinBigIndex end = columnStart[iColumn + 1];
-      int n = static_cast< int >(end - start);
-      bool odd = (n & 1) != 0;
-      n &= ~1;
-      const int *COIN_RESTRICT rowThis = row + start;
-      const double *COIN_RESTRICT elementThis = elementByColumn + start;
-      for (int i = 0; i < n; i += 2) {
-        int iRow0 = rowThis[i];
-        int iRow1 = rowThis[i + 1];
-        value -= pi[iRow0] * elementThis[i];
-        value -= pi[iRow1] * elementThis[i + 1];
-      }
-      if (odd) {
-        int iRow = rowThis[n];
-        value -= pi[iRow] * elementThis[n];
-      }
-      value *= scale;
-      if (fabs(value) > zeroTolerance) {
-        // and do other array
-        double modification = 0.0;
-        for (int i = 0; i < n; i += 2) {
-          int iRow0 = rowThis[i];
-          int iRow1 = rowThis[i + 1];
-          modification += piWeight[iRow0] * elementThis[i];
-          modification += piWeight[iRow1] * elementThis[i + 1];
-        }
-        if (odd) {
-          int iRow = rowThis[n];
-          modification += piWeight[iRow] * elementThis[n];
-        }
-        modification *= scale;
-        double thisWeight = weights[iColumn];
-        double pivot = value * scaleFactor;
-        double pivotSquared = pivot * pivot;
-        thisWeight += pivotSquared * devex + pivot * modification;
-        if (thisWeight < DEVEX_TRY_NORM) {
-          if (referenceIn < 0.0) {
-            // steepest
-            thisWeight = std::max(DEVEX_TRY_NORM, DEVEX_ADD_ONE + pivotSquared);
-          } else {
-            // exact
-            thisWeight = referenceIn * pivotSquared;
-            if (reference(iColumn))
-              thisWeight += 1.0;
-            thisWeight = std::max(thisWeight, DEVEX_TRY_NORM);
-          }
-        }
-        weights[iColumn] = thisWeight;
-        if (!killDjs) {
-          value = reducedCost[iColumn] - value;
-          reducedCost[iColumn] = value;
-          if (iStat > 1 && iStat < 4) {
-            value *= mmult[iStat - 2];
-            if (value <= dualTolerance)
-              value = 0.0;
-          } else {
-            // free or super basic
-            if (fabs(value) > FREE_ACCEPT * dualTolerance) {
-              // we are going to bias towards free (but only if reasonable)
-              value *= FREE_BIAS;
-            } else {
-              value = 0.0;
-            }
-          }
-          if (value) {
-            value *= value;
-            // store square in list
-            if (infeas[iColumn]) {
-              infeas[iColumn] = value; // already there
-            } else {
-              array[numberNonZero] = value;
-              index[numberNonZero++] = iColumn;
-            }
-          } else {
-            array[numberNonZero] = 0.0;
-            index[numberNonZero++] = iColumn;
-          }
-        }
-      }
-    }
-  }
-  info.numberAdded = numberNonZero;
-}
-#endif
 
 /* Updates two arrays for steepest and does devex weights
    Returns nonzero if updates reduced cost and infeas -
@@ -2686,45 +2110,6 @@ int ClpPackedMatrix::transposeTimes2(const ClpSimplex *model,
       if (!columnCopy_ || killDjs) {
         if (infeas)
           returnCode = 1;
-#if ABOCA_LITE
-        int numberThreads = abcState();
-        if (numberThreads) {
-          clpTempInfo info[ABOCA_LITE];
-          int chunk = (numberActiveColumns_ + numberThreads - 1) / numberThreads;
-          int n = 0;
-          for (int i = 0; i < numberThreads; i++) {
-            info[i].theta = referenceIn;
-            info[i].changeObj = devex;
-            info[i].primalRatio = scaleFactor;
-            info[i].lower = weights;
-            info[i].reducedCost = reducedCost;
-            info[i].upper = infeas;
-            info[i].which = index + n;
-            info[i].infeas = array + n;
-            info[i].index = reinterpret_cast< int * >(reference);
-            info[i].work = const_cast< double * >(pi);
-            info[i].cost = const_cast< double * >(piWeight);
-            info[i].status = const_cast< unsigned char * >(model->statusArray());
-            info[i].startColumn = n;
-            info[i].element = elementByColumn;
-            info[i].start = columnStart;
-            info[i].row = row;
-            info[i].numberToDo = std::min(chunk, numberActiveColumns_ - n);
-            info[i].tolerance = zeroTolerance;
-            info[i].dualTolerance = dualTolerance;
-            info[i].numberInfeasibilities = killDjs ? 1 : 0;
-            n += chunk;
-          }
-          for (int i = 0; i < numberThreads; i++) {
-            cilk_spawn transposeTimes2UnscaledBit(info[i]);
-          }
-          cilk_sync;
-          for (int i = 0; i < numberThreads; i++) {
-            numberNonZero += info[i].numberAdded;
-          }
-          moveAndZero(info, 2, NULL);
-        } else {
-#endif
           CoinBigIndex j;
           CoinBigIndex end = columnStart[0];
           for (iColumn = 0; iColumn < numberActiveColumns_; iColumn++) {
@@ -2816,9 +2201,6 @@ int ClpPackedMatrix::transposeTimes2(const ClpSimplex *model,
               }
             }
           }
-#if ABOCA_LITE
-        }
-#endif
       } else {
         // use special column copy
         // reset back
@@ -2859,50 +2241,6 @@ int ClpPackedMatrix::transposeTimes2(const ClpSimplex *model,
         if (infeas)
           returnCode = 1;
         const double *COIN_RESTRICT columnScale = model->columnScale();
-#if ABOCA_LITE
-        int numberThreads = abcState();
-        if (numberThreads) {
-          clpTempInfo info[ABOCA_LITE];
-          int chunk = (numberActiveColumns_ + numberThreads - 1) / numberThreads;
-          int n = 0;
-          for (int i = 0; i < numberThreads; i++) {
-            info[i].theta = referenceIn;
-            info[i].changeObj = devex;
-            info[i].primalRatio = scaleFactor;
-            info[i].lower = weights;
-            info[i].reducedCost = reducedCost;
-            info[i].upper = infeas;
-            info[i].solution = const_cast< double * >(columnScale);
-            info[i].which = index + n;
-            info[i].infeas = array + n;
-            info[i].index = reinterpret_cast< int * >(reference);
-            info[i].work = const_cast< double * >(pi);
-            info[i].cost = const_cast< double * >(piWeight);
-            info[i].status = const_cast< unsigned char * >(model->statusArray());
-            info[i].startColumn = n;
-            info[i].element = elementByColumn;
-            info[i].start = columnStart;
-            info[i].row = row;
-            info[i].numberToDo = std::min(chunk, numberActiveColumns_ - n);
-            info[i].tolerance = zeroTolerance;
-            info[i].dualTolerance = dualTolerance;
-            info[i].numberInfeasibilities = killDjs ? 1 : 0;
-            n += chunk;
-          }
-          for (int i = 0; i < numberThreads; i++) {
-            cilk_spawn transposeTimes2ScaledBit(info[i]);
-          }
-          cilk_sync;
-          for (int i = 0; i < numberThreads; i++) {
-            numberNonZero += info[i].numberAdded;
-          }
-          moveAndZero(info, 2, NULL);
-          if (infeas) {
-            returnCode = 1;
-            dj1->setNumElements(numberNonZero);
-          }
-        } else {
-#endif
           CoinBigIndex j;
           CoinBigIndex end = columnStart[0];
           for (iColumn = 0; iColumn < numberActiveColumns_; iColumn++) {
@@ -2994,9 +2332,6 @@ int ClpPackedMatrix::transposeTimes2(const ClpSimplex *model,
               }
             }
           }
-#if ABOCA_LITE
-        }
-#endif
         if (infeas && false) {
           double tolerance = model->currentDualTolerance();
           // we can't really trust infeasibilities if there is dual error
@@ -9562,24 +8897,7 @@ void ClpPackedMatrix3::transposeTimes2(const ClpSimplex *model,
 #endif
   info[ODD_INFO + 1].startColumn = numberBlocks_;
   info[ODD_INFO + 1].numberToDo = numberBlocks_ + 1;
-#if ABOCA_LITE
-  if (abcState() > 1) {
-    cilk_spawn transposeTimes3Bit2Odd(info[ODD_INFO]);
-    for (int iBlock = 0; iBlock < numberChunks_; iBlock++) {
-      cilk_spawn transposeTimes3Bit2(info[iBlock]);
-    }
-    if (infeas)
-      transposeTimes3BitSlacks(info[ODD_INFO + 1]);
-    cilk_sync;
-  } else {
-    transposeTimes3Bit2Odd(info[ODD_INFO]);
-    for (int iBlock = 0; iBlock < numberChunks_; iBlock++) {
-      transposeTimes3Bit2(info[iBlock]);
-    }
-    if (infeas)
-      transposeTimes3BitSlacks(info[ODD_INFO + 1]);
-  }
-#elif PRICE_USE_OPENMP
+#if   PRICE_USE_OPENMP
   transposeTimes3Bit2Odd(info[ODD_INFO]);
   int numberThreads;
   int iThread, iBlock;
@@ -9910,51 +9228,6 @@ void ClpPackedMatrix::transposeTimes(CoinWorkDouble scalar,
 #endif
 #if 0
 #undef ABCSTATE_LITE
-#if ABOCA_LITE
-/* Meat of transposeTimes by column when not scaled and skipping
-   and doing part of dualColumn */
-static void
-dualColumn00(clpTempInfo & info)
-{
-  const int * COIN_RESTRICT which = info.which;
-  const double * COIN_RESTRICT work = info.work;
-  int * COIN_RESTRICT index = info.index;
-  double * COIN_RESTRICT spare = info.spare;
-  const unsigned char * COIN_RESTRICT status = info.status;
-  const double * COIN_RESTRICT reducedCost = info.reducedCost;
-  double upperTheta = info.upperTheta;
-  double acceptablePivot = info.acceptablePivot;
-  double dualTolerance = info.tolerance;
-  int numberToDo=info.numberToDo;
-  double tentativeTheta = 1.0e15;
-  int numberRemaining = 0;
-  double multiplier[] = { -1.0, 1.0};
-  double dualT = - dualTolerance;
-  for (int i = 0; i < numberToDo; i++) {
-    int iSequence = which[i];
-    int wanted = (status[iSequence] & 3) - 1;
-    if (wanted) {
-      double mult = multiplier[wanted-1];
-      double alpha = work[i] * mult;
-      if (alpha > 0.0) {
-	double oldValue = reducedCost[iSequence] * mult;
-	double value = oldValue - tentativeTheta * alpha;
-	if (value < dualT) {
-	  value = oldValue - upperTheta * alpha;
-	  if (value < dualT && alpha >= acceptablePivot) {
-	    upperTheta = (oldValue - dualT) / alpha;
-	  }
-	  // add to list
-	  spare[numberRemaining] = alpha * mult;
-	  index[numberRemaining++] = iSequence;
-	}
-      }
-    }
-  }
-  info.numberRemaining = numberRemaining;
-  info.upperTheta = upperTheta;
-}
-#endif
 int
 ClpSimplexDual::dualColumn0(const CoinIndexedVector * rowArray,
                             const CoinIndexedVector * columnArray,
@@ -9988,12 +9261,7 @@ ClpSimplexDual::dualColumn0(const CoinIndexedVector * rowArray,
 	  double multiplier[4]={0.0,0.0,-1.0,1.0};
 #endif
           double dualT = - dualTolerance_;
-#if ABOCA_LITE == 0
 	  int nSections=2;
-#else
-	  int numberThreads=abcState();
-	  int nSections=numberThreads ? 1 : 2;
-#endif
           for (int iSection = 0; iSection < nSections; iSection++) {
 
                int addSequence;
@@ -10191,43 +9459,6 @@ ClpSimplexDual::dualColumn0(const CoinIndexedVector * rowArray,
 	       }
 #endif
           }
-#if ABOCA_LITE
-	  if (numberThreads) {
-	  work = columnArray->denseVector();
-	  number = columnArray->getNumElements();
-	  which = columnArray->getIndices();
-	  reducedCost = reducedCostWork_;
-	  unsigned char * statusArray = status_;
-	  
-	  clpTempInfo info[ABOCA_LITE];
-	  int chunk = (number+numberThreads-1)/numberThreads;
-	  int n=0;
-	  int nR=numberRemaining;
-	  for (int i=0;i<numberThreads;i++) {
-	    info[i].which=const_cast<int *>(which+n);
-	    info[i].work=const_cast<double *>(work+n);
-	    info[i].numberToDo=std::min(chunk,number-n);
-	    n += chunk;
-	    info[i].index = index+nR;
-	    info[i].spare = spare+nR;
-	    nR += chunk;
-	    info[i].reducedCost = const_cast<double *>(reducedCost);
-	    info[i].upperTheta = upperTheta;
-	    info[i].acceptablePivot = acceptablePivot;
-	    info[i].status = statusArray;
-	    info[i].tolerance=dualTolerance_;
-	  }
-	  for (int i=0;i<numberThreads;i++) {
-	    cilk_spawn dualColumn00(info[i]);
-	  }
-	  cilk_sync;
-	  moveAndZero(info,1,NULL);
-	  for (int i=0;i<numberThreads;i++) {
-	    numberRemaining += info[i].numberRemaining;
-	    upperTheta = std::min(upperTheta,static_cast<double>(info[i].upperTheta));
-	  }
-	  }
-#endif
      } else {
           // some free or super basic
           for (int iSection = 0; iSection < 2; iSection++) {

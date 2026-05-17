@@ -46,9 +46,6 @@ static char coin_prompt[] = "Clp:";
 #endif
 #endif
 
-#ifdef CLP_HAS_ABC
-#include "AbcCommon.hpp"
-#endif
 
 static bool doPrinting = true;
 static std::string afterEquals = "";
@@ -1629,24 +1626,6 @@ void establishParams(std::vector< CbcOrClpParam > &parameters)
   "Value 'before' means use the heuristic only if option doHeuristics is used. " \
   "Value 'both' means to use the heuristic if option doHeuristics is used and during solve."
 
-#if CLP_HAS_ABC || ABOCA_LITE
-  CbcOrClpParam paramAboca("abc", "Whether to visit Aboca", "off", CLP_PARAM_STR_ABCWANTED, 7, 0);
-  paramAboca.append("one");
-  paramAboca.append("two");
-  paramAboca.append("three");
-  paramAboca.append("four");
-  paramAboca.append("five");
-  paramAboca.append("six");
-  paramAboca.append("seven");
-  paramAboca.append("eight");
-  paramAboca.append("on");
-  paramAboca.append("decide");
-  paramAboca.setFakeKeyWord(10);
-  paramAboca.setLonghelp(
-    "Decide whether to use A Basic Optimization Code (Accelerated?) \
-and whether to try going parallel!");
-  parameters.push_back(paramAboca);
-#endif
   {
     CbcOrClpParam p("allC!ommands", "Whether to print less used commands",
       "no", CLP_PARAM_STR_ALLCOMMANDS);
@@ -2474,15 +2453,8 @@ of dual information to use.  After that it goes back to powers of 2 so -\n\
     p.append("simple");
     p.append("osl");
     p.setLonghelp(
-#ifndef ABC_INHERIT
       "The default is to use the normal CoinFactorization, but \
 other choices are a dense one, OSL's, or one designed for small problems."
-#else
-      "Normally the default is to use the normal CoinFactorization, but \
-other choices are a dense one, OSL's, or one designed for small problems. \
-However if at Aboca then the default is CoinAbcFactorization and other choices are \
-a dense one, one designed for small problems or if enabled a long factorization."
-#endif
     );
     parameters.push_back(p);
   }

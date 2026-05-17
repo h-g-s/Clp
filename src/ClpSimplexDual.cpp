@@ -96,10 +96,6 @@
 
 #include "CoinHelperFunctions.hpp"
 #include "ClpHelperFunctions.hpp"
-#if ABOCA_LITE
-// 2 is owner of abcState_
-#define ABCSTATE_LITE 2
-#endif
 // #define FAKE_CILK
 #include "ClpSimplexDual.hpp"
 #include "ClpEventHandler.hpp"
@@ -1251,12 +1247,6 @@ int ClpSimplexDual::whileIterating(double *&givenDuals, int ifValuesPass)
       candidate = -1;
     dualRow(candidate);
     if (pivotRow_ >= 0) {
-#if ABOCA_LITE_FACTORIZATION
-      int numberThreads = abcState();
-      if (numberThreads)
-        cilk_spawn factorization_->replaceColumn1(columnArray_[1],
-          pivotRow_);
-#endif
       // we found a pivot row
       if (handler_->detail(CLP_SIMPLEX_PIVOTROW, messages_) < 100) {
         handler_->message(CLP_SIMPLEX_PIVOTROW, messages_)
@@ -1588,14 +1578,6 @@ int ClpSimplexDual::whileIterating(double *&givenDuals, int ifValuesPass)
         }
         // if stable replace in basis
         int updateStatus = 123456789;
-#if ABOCA_LITE_FACTORIZATION
-        if (numberThreads)
-          cilk_sync;
-        if (columnArray_[1]->getNumElements())
-          updateStatus = factorization_->replaceColumn2(columnArray_[1],
-            pivotRow_, alpha_);
-        if (updateStatus == 123456789)
-#endif
           updateStatus = factorization_->replaceColumn(this,
             rowArray_[2],
             rowArray_[1],
@@ -2382,47 +2364,6 @@ int ClpSimplexDual::whileIterating(double *&givenDuals, int ifValuesPass)
 #endif
   return returnCode;
 }
-#if ABOCA_LITE
-static void
-updateDualBit(clpTempInfo &info)
-{
-  int numberInfeasibilities = 0;
-  double tolerance = info.tolerance;
-  double theta = info.theta;
-  double *COIN_RESTRICT reducedCost = info.reducedCost;
-  const double *COIN_RESTRICT lower = info.lower;
-  const double *COIN_RESTRICT upper = info.upper;
-  double *COIN_RESTRICT work = info.work;
-  int number = info.numberToDo;
-  int *COIN_RESTRICT which = info.which;
-  const unsigned char *COIN_RESTRICT statusArray = info.status;
-  double multiplier[] = { -1.0, 1.0 };
-  for (int i = 0; i < number; i++) {
-    int iSequence = which[i];
-    double alphaI = work[i];
-    work[i] = 0.0;
-
-    int iStatus = (statusArray[iSequence] & 3) - 1;
-    if (iStatus) {
-      double value = reducedCost[iSequence] - theta * alphaI;
-      reducedCost[iSequence] = value;
-      // printf("xx %d %.18g\n",iSequence,reducedCost[iSequence]);
-      if (iStatus > 0) {
-        double mult = multiplier[iStatus - 1];
-        value *= mult;
-        // skip if free
-        if (value < -tolerance) {
-          // flipping bounds
-          double movement = mult * (upper[iSequence] - lower[iSequence]);
-          work[numberInfeasibilities] = movement;
-          which[numberInfeasibilities++] = iSequence;
-        }
-      }
-    }
-  }
-  info.numberInfeasibilities = numberInfeasibilities;
-}
-#endif
 /* The duals are updated by the given arrays.
    Returns number of infeasibilities.
    rowArray and columnarray will have flipped
@@ -2512,48 +2453,6 @@ int ClpSimplexDual::updateDualsInDual(CoinIndexedVector *rowArray,
     which = columnArray->getIndices();
     if ((moreSpecialOptions_ & 8) != 0) {
       const unsigned char *COIN_RESTRICT statusArray = status_;
-#if ABOCA_LITE
-      int numberThreads = abcState();
-      if (numberThreads) {
-        clpTempInfo info[ABOCA_LITE];
-        int chunk = (number + numberThreads - 1) / numberThreads;
-        int n = 0;
-        int *whichX = which;
-        for (i = 0; i < numberThreads; i++) {
-          info[i].theta = theta;
-          info[i].tolerance = tolerance;
-          info[i].reducedCost = reducedCost;
-          info[i].lower = lower;
-          info[i].upper = upper;
-          info[i].status = statusArray;
-          info[i].which = which + n;
-          info[i].work = work + n;
-          info[i].numberToDo = std::min(chunk, number - n);
-          n += chunk;
-        }
-        for (i = 0; i < numberThreads; i++) {
-          cilk_spawn updateDualBit(info[i]);
-        }
-        cilk_sync;
-        for (i = 0; i < numberThreads; i++) {
-          int n = info[i].numberInfeasibilities;
-          double *workV = info[i].work;
-          int *whichV = info[i].which;
-          for (int j = 0; j < n; j++) {
-            int iSequence = whichV[j];
-            double movement = workV[j];
-            workV[j] = 0.0;
-            whichX[numberInfeasibilities++] = iSequence;
-#ifndef NDEBUG
-            if (fabs(movement) >= 1.0e30)
-              resetFakeBounds(-1000 - iSequence);
-#endif
-            changeObj += movement * cost[iSequence];
-            matrix_->add(this, outputArray, iSequence, movement);
-          }
-        }
-      } else {
-#endif
         for (i = 0; i < number; i++) {
           int iSequence = which[i];
           double alphaI = work[i];
@@ -2587,9 +2486,6 @@ int ClpSimplexDual::updateDualsInDual(CoinIndexedVector *rowArray,
             }
           }
         }
-#if ABOCA_LITE
-      }
-#endif
     } else {
       for (i = 0; i < number; i++) {
         int iSequence = which[i];
@@ -3537,124 +3433,6 @@ int ClpSimplexDual::checkFakeBounds() const
   }
   return numberActive;
 }
-#if ABOCA_LITE
-/* Meat of transposeTimes by column when not scaled and skipping
-   and doing part of dualColumn */
-static void
-dualColumn00(clpTempInfo &info)
-{
-  const int *COIN_RESTRICT which = info.which;
-  const double *COIN_RESTRICT work = info.work;
-  int *COIN_RESTRICT index = info.index;
-  double *COIN_RESTRICT spare = info.spare;
-  const unsigned char *COIN_RESTRICT status = info.status;
-  const double *COIN_RESTRICT reducedCost = info.reducedCost;
-  double upperTheta = info.upperTheta;
-  double acceptablePivot = info.acceptablePivot;
-  double dualTolerance = info.tolerance;
-  int numberToDo = info.numberToDo;
-  double tentativeTheta = 1.0e25;
-  int numberRemaining = 0;
-  double multiplier[] = { -1.0, 1.0 };
-  double dualT = -dualTolerance;
-  for (int i = 0; i < numberToDo; i++) {
-    int iSequence = which[i];
-    int wanted = (status[iSequence] & 3) - 1;
-    if (wanted > 0) {
-      double mult = multiplier[wanted - 1];
-      double alpha = work[i] * mult;
-      if (alpha > 0.0) {
-        double oldValue = reducedCost[iSequence] * mult;
-        double value = oldValue - tentativeTheta * alpha;
-        if (value < dualT) {
-          value = oldValue - upperTheta * alpha;
-          if (value < dualT && alpha >= acceptablePivot) {
-            upperTheta = (oldValue - dualT) / alpha;
-          }
-          // add to list
-          spare[numberRemaining] = alpha * mult;
-          index[numberRemaining++] = iSequence;
-        }
-      }
-    }
-  }
-  info.numberRemaining = numberRemaining;
-  info.upperTheta = upperTheta;
-}
-static void
-dualColumn000(int numberThreads, clpTempInfo *info)
-{
-  for (int i = 0; i < numberThreads; i++) {
-    cilk_spawn dualColumn00(info[i]);
-  }
-  cilk_sync;
-}
-void moveAndZero(clpTempInfo *info, int type, void *extra)
-{
-  int numberThreads = abcState();
-  switch (type) {
-  case 1: {
-    int numberRemaining = info[0].numberRemaining;
-    int *COIN_RESTRICT index = info[0].index + numberRemaining;
-    double *COIN_RESTRICT spare = info[0].spare + numberRemaining;
-    for (int i = 1; i < numberThreads; i++) {
-      int number = info[i].numberRemaining;
-      memmove(index, info[i].index, number * sizeof(int));
-      index += number;
-      double *COIN_RESTRICT from = info[i].spare;
-      assert(from >= spare);
-      memmove(spare, from, number * sizeof(double));
-      spare += number;
-    }
-    // now zero out
-    int i;
-    for (i = 1; i < numberThreads; i++) {
-      double *spareBit = info[i].spare + info[i].numberRemaining;
-      if (spareBit > spare) {
-        memset(spare, 0, (spareBit - spare) * sizeof(double));
-        break;
-      }
-    }
-    i++; // just zero
-    for (; i < numberThreads; i++) {
-      int number = info[i].numberRemaining;
-      memset(info[i].spare, 0, number * sizeof(double));
-    }
-  } break;
-  case 2: {
-    int numberAdded = info[0].numberAdded;
-    int *COIN_RESTRICT index = info[0].which + numberAdded;
-    double *COIN_RESTRICT spare = info[0].infeas + numberAdded;
-    for (int i = 1; i < numberThreads; i++) {
-      int number = info[i].numberAdded;
-      memmove(index, info[i].which, number * sizeof(int));
-      index += number;
-      double *COIN_RESTRICT from = info[i].infeas;
-      assert(from >= spare);
-      memmove(spare, from, number * sizeof(double));
-      spare += number;
-    }
-    // now zero out
-    int i;
-    for (i = 1; i < numberThreads; i++) {
-      double *spareBit = info[i].infeas + info[i].numberAdded;
-      if (spareBit > spare) {
-        memset(spare, 0, (spareBit - spare) * sizeof(double));
-        break;
-      }
-    }
-    i++; // just zero
-    for (; i < numberThreads; i++) {
-      int number = info[i].numberAdded;
-      memset(info[i].infeas, 0, number * sizeof(double));
-    }
-  } break;
-  default:
-    abort();
-    break;
-  }
-}
-#endif
 #ifdef _MSC_VER
 #include <intrin.h>
 #elif defined(__ARM_FEATURE_SIMD32) || defined(__ARM_NEON)
@@ -3691,12 +3469,7 @@ int ClpSimplexDual::dualColumn0(const CoinIndexedVector *rowArray,
     double multiplier[4] = { 0.0, 0.0, -1.0, 1.0 };
 #endif
     double dualT = -dualTolerance_;
-#if ABOCA_LITE == 0
     int nSections = 2;
-#else
-    int numberThreads = abcState();
-    int nSections = numberThreads ? 1 : 2;
-#endif
     for (int iSection = 0; iSection < nSections; iSection++) {
 
       int addSequence;
@@ -4020,41 +3793,6 @@ int ClpSimplexDual::dualColumn0(const CoinIndexedVector *rowArray,
       }
 #endif
     }
-#if ABOCA_LITE
-    if (numberThreads) {
-      work = columnArray->denseVector();
-      number = columnArray->getNumElements();
-      which = columnArray->getIndices();
-      reducedCost = reducedCostWork_;
-      unsigned char *statusArray = status_;
-
-      clpTempInfo info[ABOCA_LITE];
-      int chunk = (number + numberThreads - 1) / numberThreads;
-      int n = 0;
-      int nR = numberRemaining;
-      for (int i = 0; i < numberThreads; i++) {
-        info[i].which = const_cast< int * >(which + n);
-        info[i].work = const_cast< double * >(work + n);
-        info[i].numberToDo = std::min(chunk, number - n);
-        n += chunk;
-        info[i].index = index + nR;
-        info[i].spare = spare + nR;
-        nR += chunk;
-        info[i].reducedCost = const_cast< double * >(reducedCost);
-        info[i].upperTheta = upperTheta;
-        info[i].acceptablePivot = acceptablePivot;
-        info[i].status = statusArray;
-        info[i].tolerance = dualTolerance_;
-      }
-      // for gcc - get cilk out of function to stop avx2 error
-      dualColumn000(numberThreads, info);
-      moveAndZero(info, 1, NULL);
-      for (int i = 0; i < numberThreads; i++) {
-        numberRemaining += info[i].numberRemaining;
-        upperTheta = std::min(upperTheta, static_cast< double >(info[i].upperTheta));
-      }
-    }
-#endif
   } else {
     // some free or super basic
     for (int iSection = 0; iSection < 2; iSection++) {

@@ -21,12 +21,6 @@
 #define GLP_NOFEAS 4
 #define GLP_OPT 5
 
-#if ABOCA_LITE
-// 1 is not owner of abcState_
-#define ABCSTATE_LITE 1
-#include <cilk/cilk.h>
-#include <cilk/cilk_api.h>
-#endif
 #if PRICE_USE_OPENMP
 #include "omp.h"
 #endif
@@ -46,7 +40,6 @@
 #include "CoinTime.hpp"
 #include "CoinWarmStartBasis.hpp"
 
-#include "AbcCommon.hpp"
 #include "ClpDualRowDantzig.hpp"
 #include "ClpDualRowSteepest.hpp"
 #include "ClpFactorization.hpp"
@@ -71,21 +64,11 @@
 #include "ClpOutput.hpp"
 
 #include "ClpModelParameters.hpp"
-#ifdef ABC_INHERIT
-#include "AbcDualRowDantzig.hpp"
-#include "AbcDualRowSteepest.hpp"
-#include "AbcSimplex.hpp"
-#include "AbcSimplexFactorization.hpp"
-#endif
 
 //#############################################################################
 //#############################################################################
 
-#ifndef ABC_INHERIT
 void printGeneralMessage(ClpSimplex &model, std::string message, int type)
-#else
-void printGeneralMessage(AbcSimplex &model, std::string message, int type)
-#endif
 {
   if (message.length()) {
     model.messageHandler()->message(type, model.messages())
@@ -96,11 +79,7 @@ void printGeneralMessage(AbcSimplex &model, std::string message, int type)
 //#############################################################################
 //#############################################################################
 
-#ifndef ABC_INHERIT
 void printGeneralWarning(ClpSimplex &model, std::string message, int type)
-#else
-   void printGeneralWarning(AbcSimplex &model, std::string message, int type)
-#endif
 {
   if (message.length()) {
     model.messageHandler()->message(type, model.messages())
@@ -115,13 +94,8 @@ void printGeneralWarning(ClpSimplex &model, std::string message, int type)
 #undef NDEBUG
 #endif
 
-#ifndef ABC_INHERIT
 CLPLIB_EXPORT
 void ClpMain0(ClpSimplex &model)
-#else
-CLPLIB_EXPORT
-void ClpMain0(AbcSimplex &model)
-#endif
 {
   model.setPerturbation(50);
   model.messageHandler()->setPrefix(false);
@@ -134,13 +108,8 @@ void ClpMain0(AbcSimplex &model)
 //#############################################################################
 //#############################################################################
 // old way
-#ifndef ABC_INHERIT
 CLPLIB_EXPORT
 void ClpMain0(ClpSimplex *model)
-#else
-CLPLIB_EXPORT
-void ClpMain0(AbcSimplex *model)
-#endif
 {
   model->setPerturbation(50);
   model->messageHandler()->setPrefix(false);
@@ -149,27 +118,16 @@ void ClpMain0(AbcSimplex *model)
   model->setPrimalTolerance(1.0e-6);
 #endif
 }
-#ifndef ABC_INHERIT
 CLPLIB_EXPORT
 int ClpMain1(int argc, const char *argv[], ClpSimplex *model)
-#else
-CLPLIB_EXPORT
-int ClpMain1(int argc, const char *argv[], AbcSimplex *model)
-#endif
 {
   std::deque<std::string> inputQueue;
   CoinParamUtils::formInputQueue(inputQueue, "clp", argc, const_cast< char ** >(argv));
   return ClpMain1(inputQueue,*model);
 }
-#ifndef ABC_INHERIT
 CLPLIB_EXPORT
 int ClpMain1(std::deque<std::string> inputQueue, ClpSimplex &model,
              ampl_info *info)
-#else
-CLPLIB_EXPORT
-int ClpMain1(std::deque<std::string> inputQueue, AbcSimplex &model,
-             ampl_info *info)
-#endif
 {
   std::ostringstream buffer;
   std::string field, message, fileName;
@@ -184,11 +142,6 @@ int ClpMain1(std::deque<std::string> inputQueue, AbcSimplex &model,
   static std::string mpsFile = "";
   memset(debugInt, 0, sizeof(debugInt));
   memset(debugDouble, 0, sizeof(debugDouble));
-#endif
-#if ABOCA_LITE
-  //__cilkrts_end_cilk();
-  __cilkrts_set_param("nworkers", "1");
-  // abcState_=1;
 #endif
   // default action on import
   int allowImportErrors = 0;
@@ -597,52 +550,27 @@ int ClpMain1(std::deque<std::string> inputQueue, AbcSimplex &model,
         case ClpParam::DIRECTION:
           if (mode == 0) {
             model_.setOptimizationDirection(1);
-#ifdef ABC_INHERIT
-            model_.setOptimizationDirection(1);
-#endif
           } else if (mode == 1) {
             model_.setOptimizationDirection(-1);
-#ifdef ABC_INHERIT
-            model_.setOptimizationDirection(-1);
-#endif
           } else {
             model_.setOptimizationDirection(0);
-#ifdef ABC_INHERIT
-            model_.setOptimizationDirection(0);
-#endif
           }
           break;
         case ClpParam::DUALPIVOT:
           if (mode == 0) {
             ClpDualRowSteepest steep(3);
             model_.setDualRowPivotAlgorithm(steep);
-#ifdef ABC_INHERIT
-            AbcDualRowSteepest steep2(3);
-            model_.setDualRowPivotAlgorithm(steep2);
-#endif
           } else if (mode == 1) {
             // ClpDualRowDantzig dantzig;
             ClpDualRowDantzig dantzig;
             model_.setDualRowPivotAlgorithm(dantzig);
-#ifdef ABC_INHERIT
-            AbcDualRowDantzig dantzig2;
-            model_.setDualRowPivotAlgorithm(dantzig2);
-#endif
           } else if (mode == 2) {
             // partial steep
             ClpDualRowSteepest steep(2);
             model_.setDualRowPivotAlgorithm(steep);
-#ifdef ABC_INHERIT
-            AbcDualRowSteepest steep2(2);
-            model_.setDualRowPivotAlgorithm(steep2);
-#endif
           } else if (mode == 3) {
             ClpDualRowSteepest steep;
             model_.setDualRowPivotAlgorithm(steep);
-#ifdef ABC_INHERIT
-            AbcDualRowSteepest steep2;
-            model_.setDualRowPivotAlgorithm(steep2);
-#endif
           } else if (mode == 4) {
             // Positive edge steepest
             ClpPEDualRowSteepest p(fabs(parameters[ClpParam::PSI]->dblVal()));
@@ -712,17 +640,7 @@ int ClpMain1(std::deque<std::string> inputQueue, AbcSimplex &model,
           allowImportErrors = mode;
           break;
         case ClpParam::ABCWANTED:
-#ifdef ABC_INHERIT
-          model_.setAbcState(mode);
-#elif ABOCA_LITE
-          setAbcState(mode);
-          {
-            char temp[3];
-            sprintf(temp, "%d", mode);
-            __cilkrts_set_param("nworkers", temp);
-            printf("setting cilk workers to %d\n", mode);
-          }
-#elif PRICE_USE_OPENMP
+#if   PRICE_USE_OPENMP
           omp_set_num_threads(mode);
 #endif
           break;
@@ -747,9 +665,6 @@ int ClpMain1(std::deque<std::string> inputQueue, AbcSimplex &model,
           break;
         case ClpParam::FACTORIZATION:
           model_.factorization()->forceOtherFactorization(mode);
-#ifdef ABC_INHERIT
-          model_.factorization()->forceOtherFactorization(mode);
-#endif
           break;
         case ClpParam::CRASH:
           doCrash = mode;
@@ -759,9 +674,6 @@ int ClpMain1(std::deque<std::string> inputQueue, AbcSimplex &model,
           break;
         case ClpParam::MESSAGES:
           model_.messageHandler()->setPrefix(mode != 0);
-#ifdef ABC_INHERIT
-          model_.messageHandler()->setPrefix(mode != 0);
-#endif
           break;
         case ClpParam::CHOLESKY:
           choleskyType = mode;
@@ -886,11 +798,7 @@ int ClpMain1(std::deque<std::string> inputQueue, AbcSimplex &model,
           ClpSolve::SolveType method;
           ClpSolve::PresolveType presolveType;
           ClpSolve solveOptions;
-#ifndef ABC_INHERIT
           ClpSimplex *model2 = &model_;
-#else
-          AbcSimplex *model2 = &model_;
-#endif
           if (paramCode == ClpParam::EITHERSIMPLEX)
             solveOptions.setSpecialOption(3, 0); // allow +-1
           if (dualize == 4) {
@@ -905,11 +813,7 @@ int ClpMain1(std::deque<std::string> inputQueue, AbcSimplex &model,
               dualize = 1;
               int numberColumns = model2->numberColumns();
               int numberRows = model2->numberRows();
-#ifndef ABC_INHERIT
               if (numberRows < 50000 || 5 * numberColumns > numberRows) {
-#else
-              if (numberRows < 500 || 4 * numberColumns > numberRows) {
-#endif
                 tryIt = false;
               } else {
                 fractionColumn = 0.1;
@@ -927,14 +831,7 @@ int ClpMain1(std::deque<std::string> inputQueue, AbcSimplex &model,
                        << " columns" << std::endl;
                 printGeneralMessage(model_, buffer.str());
                 model_.setOptimizationDirection(1.0);
-#ifndef ABC_INHERIT
                 model2 = thisModel;
-#else
-                int abcState = model2->abcState();
-                model2 = new AbcSimplex(*thisModel);
-                model2->setAbcState(abcState);
-                delete thisModel;
-#endif
               } else {
                 thisModel = &model;
                 dualize = 0;
@@ -1929,21 +1826,12 @@ int ClpMain1(std::deque<std::string> inputQueue, AbcSimplex &model,
       } break;
       case ClpParam::MAXIMIZE:
         model_.setOptimizationDirection(-1);
-#ifdef ABC_INHERIT
-        model_.setOptimizationDirection(-1);
-#endif
         break;
       case ClpParam::MINIMIZE:
         model_.setOptimizationDirection(1);
-#ifdef ABC_INHERIT
-        model_.setOptimizationDirection(1);
-#endif
         break;
       case ClpParam::ALLSLACK:
         model_.allSlackBasis(true);
-#ifdef ABC_INHERIT
-        model_.allSlackBasis();
-#endif
         break;
       case ClpParam::REVERSE:{
         if (!goodModel){
@@ -2062,18 +1950,9 @@ int ClpMain1(std::deque<std::string> inputQueue, AbcSimplex &model,
         }
 #endif
           // for moment then back to model_
-#ifndef ABC_INHERIT
           int specialOptions = model_.specialOptions();
           mainTest(nFields, fields, algorithm, model_, solveOptions,
                    specialOptions, doVector != 0);
-#else
-        // if (!processTune) {
-        // specialOptions=0;
-        // model_.setSpecialOptions(model_.specialOptions()&~65536);
-        // }
-        mainTest(nFields, fields, algorithm, model_, solveOptions, 0,
-                 doVector != 0);
-#endif
         } break;
       case ClpParam::UNITTEST: {
         // create fields for unitTest
@@ -2095,13 +1974,8 @@ int ClpMain1(std::deque<std::string> inputQueue, AbcSimplex &model,
         else
           presolveType = ClpSolve::presolveOff;
         solveOptions.setPresolveType(presolveType, 5);
-#ifndef ABC_INHERIT
         mainTest(nFields, fields, algorithm, model_, solveOptions,
                  specialOptions, doVector != 0);
-#else
-        mainTest(nFields, fields, algorithm, model_, solveOptions,
-                 specialOptions, doVector != 0);
-#endif
       } break;
       case ClpParam::FAKEBOUND:{
         if (!goodModel){
@@ -2791,7 +2665,6 @@ clp watson.mps -\nscaling off\nprimalsimplex");
         break;
       }
       case ClpParam::GUESS: {
-#ifndef ABC_INHERIT
         if (!goodModel){
           printGeneralWarning(model_, "** Current model not valid\n");
           continue;
@@ -2809,10 +2682,6 @@ clp watson.mps -\nscaling off\nprimalsimplex");
             printGeneralWarning(model_,
                                 "** Guess unable to generate commands\n");
           }
-#else
-        printGeneralWarning(
-            model_, "** Can't make a guess in this build configuration\n");
-#endif
 
       }  break;
       default:
@@ -2839,11 +2708,7 @@ clp watson.mps -\nscaling off\nprimalsimplex");
   return 0;
 }
 
-#ifndef ABC_INHERIT
 int clpReadAmpl(ampl_info * info, int argc, char **argv, ClpSimplex &model)
-#else
-int clpReadAmpl(ampl_info *info, int argc, char **argv, AbcSimplex &model)
-#endif
 {
 
    std::ostringstream buffer;

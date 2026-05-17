@@ -678,8 +678,6 @@ protected:
   int numberColumnsWithGaps_;
 #if PRICE_USE_OPENMP
 #define PRICE_USE_CHUNKS 10*PRICE_USE_OPENMP
-#elif ABOCA_LITE
-#define PRICE_USE_CHUNKS ABOCA_LITE
 #endif
 #if PRICE_USE_CHUNKS
   /// Number of chunks

@@ -32,9 +32,6 @@
 #include "CoinModel.hpp"
 #include "CoinLpIO.hpp"
 #include <cfloat>
-#if CLP_HAS_ABC
-#include "CoinAbcCommon.hpp"
-#endif
 
 #include <string>
 #include <stdio.h>
@@ -128,10 +125,6 @@ ClpSimplex::ClpSimplex(bool emptyMessages)
   , maximumPerturbationSize_(0)
   , perturbationArray_(NULL)
   , baseModel_(NULL)
-#ifdef ABC_INHERIT
-  , abcSimplex_(NULL)
-  , abcState_(0)
-#endif
 #if CLP_OLD_PROGRESS==0
   , minIntervalProgressUpdate_(0.7)
 #else
@@ -252,10 +245,6 @@ ClpSimplex::ClpSimplex(const ClpModel *rhs,
   , maximumPerturbationSize_(0)
   , perturbationArray_(NULL)
   , baseModel_(NULL)
-#ifdef ABC_INHERIT
-  , abcSimplex_(NULL)
-  , abcState_(0)
-#endif
 #if CLP_OLD_PROGRESS==0
   , minIntervalProgressUpdate_(0.7)
 #else
@@ -413,10 +402,6 @@ ClpSimplex::ClpSimplex(const ClpSimplex *rhs,
   , maximumPerturbationSize_(0)
   , perturbationArray_(NULL)
   , baseModel_(NULL)
-#ifdef ABC_INHERIT
-  , abcSimplex_(NULL)
-  , abcState_(rhs->abcState_)
-#endif
   , minIntervalProgressUpdate_(rhs->minIntervalProgressUpdate_)
   , lastStatusUpdate_(rhs->lastStatusUpdate_)
 {
@@ -2568,10 +2553,6 @@ ClpSimplex::ClpSimplex(const ClpSimplex &rhs, int scalingMode)
   , maximumPerturbationSize_(0)
   , perturbationArray_(NULL)
   , baseModel_(NULL)
-#ifdef ABC_INHERIT
-  , abcSimplex_(NULL)
-  , abcState_(0)
-#endif
 {
   int i;
   for (i = 0; i < 6; i++) {
@@ -2678,10 +2659,6 @@ ClpSimplex::ClpSimplex(const ClpModel &rhs, int scalingMode)
   , maximumPerturbationSize_(0)
   , perturbationArray_(NULL)
   , baseModel_(NULL)
-#ifdef ABC_INHERIT
-  , abcSimplex_(NULL)
-  , abcState_(0)
-#endif
 #if CLP_OLD_PROGRESS==0
   , minIntervalProgressUpdate_(0.7)
 #else
@@ -2863,10 +2840,6 @@ void ClpSimplex::gutsOfCopy(const ClpSimplex &rhs)
   incomingInfeasibility_ = rhs.incomingInfeasibility_;
   allowedInfeasibility_ = rhs.allowedInfeasibility_;
   automaticScale_ = rhs.automaticScale_;
-#ifdef ABC_INHERIT
-  abcSimplex_ = NULL;
-  abcState_ = rhs.abcState_;
-#endif
   maximumPerturbationSize_ = rhs.maximumPerturbationSize_;
   if (maximumPerturbationSize_ && maximumPerturbationSize_ >= 2 * numberColumns_) {
     perturbationArray_ = CoinCopyOfArray(rhs.perturbationArray_,
@@ -13443,67 +13416,14 @@ void ClpSimplex::copyEnabledStuff(const ClpSimplex *rhs)
 CoinPthreadStuff::CoinPthreadStuff(int numberThreads,
   void *parallelManager(void *stuff))
 {
-#if defined(ABC_INHERIT) || defined(THREADS_IN_ANALYZE)
-  numberThreads_ = numberThreads;
-  if (numberThreads > 8)
-    numberThreads = 1;
-  // For waking up thread
-  memset(mutex_, 0, sizeof(mutex_));
-  for (int iThread = 0; iThread < numberThreads; iThread++) {
-    for (int i = 0; i < 3; i++) {
-      pthread_mutex_init(&mutex_[i + 3 * iThread], NULL);
-      if (i < 2)
-        pthread_mutex_lock(&mutex_[i + 3 * iThread]);
-    }
-    threadInfo_[iThread].status = 100;
-  }
-#ifdef PTHREAD_BARRIER_SERIAL_THREAD
-  //pthread_barrierattr_t attr;
-  pthread_barrier_init(&barrier_, /*&attr*/ NULL, numberThreads + 1);
-#endif
-  for (int iThread = 0; iThread < numberThreads; iThread++) {
-    pthread_create(&abcThread_[iThread], NULL, parallelManager, reinterpret_cast< void * >(this));
-  }
-#ifdef PTHREAD_BARRIER_SERIAL_THREAD
-  pthread_barrier_wait(&barrier_);
-  pthread_barrier_destroy(&barrier_);
-#endif
-  for (int iThread = 0; iThread < numberThreads; iThread++) {
-    threadInfo_[iThread].status = -1;
-    threadInfo_[iThread].stuff[3] = 1; // idle
-    locked_[iThread] = 0;
-  }
-  #endif
 }
 CoinPthreadStuff::~CoinPthreadStuff()
 {
-#if defined(ABC_INHERIT) || defined(THREADS_IN_ANALYZE)
-  for (int iThread = 0; iThread < numberThreads_; iThread++) {
-    startParallelTask(1000, iThread);
-  }
-  for (int iThread = 0; iThread < numberThreads_; iThread++) {
-    pthread_join(abcThread_[iThread], NULL);
-    for (int i = 0; i < 3; i++) {
-      pthread_mutex_destroy(&mutex_[i + 3 * iThread]);
-    }
-  }
-#endif
 }
 // so thread can find out which one it is
 int CoinPthreadStuff::whichThread() const
 {
-#if defined(ABC_INHERIT) || defined(THREADS_IN_ANALYZE)
-  pthread_t thisThread = pthread_self();
-  int whichThread;
-  for (whichThread = 0; whichThread < numberThreads_; whichThread++) {
-    if (pthread_equal(thisThread, abcThread_[whichThread]))
-      break;
-  }
-  assert(whichThread < NUMBER_THREADS + 1);
-  return whichThread;
-  #else
   return 0;
-  #endif
 }
 void CoinPthreadStuff::startParallelTask(int type, int iThread, void *info)
 {
@@ -13511,88 +13431,14 @@ void CoinPthreadStuff::startParallelTask(int type, int iThread, void *info)
     first time 0,1 owned by main 2 by child
     at end of cycle should be 1,2 by main 0 by child then 2,0 by main 1 by child
   */
-#if defined(ABC_INHERIT) || defined(THREADS_IN_ANALYZE)
-  threadInfo_[iThread].status = type;
-  threadInfo_[iThread].extraInfo = info;
-  threadInfo_[iThread].stuff[3] = 0; // say not idle
-#ifdef DETAIL_THREAD
-  printf("main doing thread %d about to unlock mutex %d\n", iThread, locked_[iThread]);
-#endif
-  pthread_mutex_unlock(&mutex_[locked_[iThread] + 3 * iThread]);
-  #endif
 }
 void CoinPthreadStuff::sayIdle(int iThread)
 {
-#if defined(ABC_INHERIT) || defined(THREADS_IN_ANALYZE)
-  threadInfo_[iThread].status = -1;
-  threadInfo_[iThread].stuff[3] = -1;
-#endif
 }
 int CoinPthreadStuff::waitParallelTask(int type, int &iThread, bool allowIdle)
 {
-#if defined(ABC_INHERIT) || defined(THREADS_IN_ANALYZE)
-  bool finished = false;
-  if (allowIdle) {
-    for (iThread = 0; iThread < numberThreads_; iThread++) {
-      if (threadInfo_[iThread].status < 0 && threadInfo_[iThread].stuff[3]) {
-        finished = true;
-        break;
-      }
-    }
-    if (finished)
-      return 0;
-  }
-  while (!finished) {
-    for (iThread = 0; iThread < numberThreads_; iThread++) {
-      if (threadInfo_[iThread].status < 0 && !threadInfo_[iThread].stuff[3]) {
-        finished = true;
-        break;
-      }
-    }
-    if (!finished) {
-#ifdef _WIN32
-      // wait 1 millisecond
-      Sleep(1);
-#else
-      // wait 0.1 millisecond
-      usleep(100);
-#endif
-    }
-  }
-  int locked = locked_[iThread] + 2;
-  if (locked >= 3)
-    locked -= 3;
-#ifdef DETAIL_THREAD
-  printf("Main do thread %d about to lock mutex %d\n", iThread, locked);
-#endif
-  pthread_mutex_lock(&mutex_[locked + iThread * 3]);
-  locked_[iThread]++;
-  if (locked_[iThread] == 3)
-    locked_[iThread] = 0;
-  threadInfo_[iThread].stuff[3] = 1; // say idle
-  return threadInfo_[iThread].stuff[0];
-#else
   return 0;
-#endif
 }
 void CoinPthreadStuff::waitAllTasks()
 {
-#if defined(ABC_INHERIT) || defined(THREADS_IN_ANALYZE)
-  int nWait = 0;
-  for (int iThread = 0; iThread < numberThreads_; iThread++) {
-    int idle = threadInfo_[iThread].stuff[3];
-    if (!idle)
-      nWait++;
-  }
-#ifdef DETAIL_THREAD
-  printf("Waiting for %d tasks to finish\n", nWait);
-#endif
-  for (int iThread = 0; iThread < nWait; iThread++) {
-    int jThread;
-    waitParallelTask(0, jThread, false);
-#ifdef DETAIL_THREAD
-    printf("finished with thread %d\n", jThread);
-#endif
-  }
-#endif
 }

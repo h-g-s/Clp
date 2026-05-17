@@ -3,10 +3,6 @@
 // This code is licensed under the terms of the Eclipse Public License (EPL).
 
 #include "CoinPragma.hpp"
-#if ABOCA_LITE
-// 1 is not owner of abcState_
-#define ABCSTATE_LITE 1
-#endif
 #include "ClpFactorization.hpp"
 #ifndef SLIM_CLP
 #include "ClpQuadraticObjective.hpp"
@@ -3080,13 +3076,8 @@ void ClpFactorization::updateTwoColumnsTranspose(CoinIndexedVector *regionSparse
 #endif
     if (coinFactorizationA_) {
       coinFactorizationA_->setCollectStatistics(doStatistics_);
-#if ABOCA_LITE_FACTORIZATION
-      coinFactorizationA_->updateTwoColumnsTranspose(regionSparse,
-        regionSparse2, regionSparse3, abcState());
-#else
       coinFactorizationA_->updateTwoColumnsTranspose(regionSparse,
         regionSparse2, regionSparse3, 0);
-#endif
       coinFactorizationA_->setCollectStatistics(false);
     } else {
       coinFactorizationB_->updateColumnTranspose(regionSparse,
@@ -3212,25 +3203,6 @@ void ClpFactorization::getWeights(int *COIN_RESTRICT weights) const
   factorization_instrument(8);
 #endif
 }
-#if ABOCA_LITE_FACTORIZATION
-// Does btranU part of replaceColumn (skipping entries)
-void ClpFactorization::replaceColumn1(CoinIndexedVector *regionSparse,
-  int pivotRow)
-{
-  if (coinFactorizationA_)
-    coinFactorizationA_->replaceColumn1(regionSparse, pivotRow);
-}
-// Does replaceColumn - having already done btranU
-int ClpFactorization::replaceColumn2(CoinIndexedVector *regionSparse,
-  int pivotRow,
-  double pivotCheck)
-{
-  if (coinFactorizationA_)
-    return coinFactorizationA_->replaceColumn2(regionSparse, pivotRow, pivotCheck);
-  else
-    return 12345678;
-}
-#endif
 // Set tolerances to safer of existing and given
 void ClpFactorization::saferTolerances(double zeroValue,
   double pivotValue)

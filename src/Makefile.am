@@ -83,51 +83,6 @@ libClp_la_SOURCES = \
 	MyMessageHandler.cpp MyMessageHandler.hpp \
 	unitTest.cpp
 
-if COIN_HAS_ABC
-libClp_la_SOURCES += \
-	AbcCommon.hpp \
-	AbcDualRowDantzig.cpp AbcDualRowDantzig.hpp \
-	AbcDualRowPivot.cpp AbcDualRowPivot.hpp \
-	AbcDualRowSteepest.cpp AbcDualRowSteepest.hpp \
-	AbcMatrix.cpp AbcMatrix.hpp \
-	AbcNonLinearCost.cpp AbcNonLinearCost.hpp \
-	AbcPrimalColumnDantzig.cpp AbcPrimalColumnDantzig.hpp \
-	AbcPrimalColumnPivot.cpp AbcPrimalColumnPivot.hpp \
-	AbcPrimalColumnSteepest.cpp AbcPrimalColumnSteepest.hpp \
-	AbcSimplex.cpp AbcSimplex.hpp \
-	AbcSimplexDual.cpp AbcSimplexDual.hpp \
-	AbcSimplexPrimal.cpp AbcSimplexPrimal.hpp \
-	AbcSimplexParallel.cpp \
-	AbcSimplexFactorization.cpp AbcSimplexFactorization.hpp \
-	AbcWarmStart.cpp AbcWarmStart.hpp \
-	CoinAbcBaseFactorization.hpp \
-	CoinAbcBaseFactorization1.cpp \
-	CoinAbcBaseFactorization2.cpp \
-	CoinAbcBaseFactorization3.cpp \
-	CoinAbcBaseFactorization4.cpp \
-	CoinAbcBaseFactorization5.cpp \
-	CoinAbcCommonFactorization.hpp \
-	CoinAbcCommon.hpp \
-	CoinAbcDenseFactorization.cpp \
-	CoinAbcDenseFactorization.hpp \
-	CoinAbcFactorization.hpp \
-	CoinAbcFactorization1.cpp \
-	CoinAbcFactorization2.cpp \
-	CoinAbcFactorization3.cpp \
-	CoinAbcFactorization4.cpp \
-	CoinAbcFactorization5.cpp \
-	CoinAbcHelperFunctions.cpp CoinAbcHelperFunctions.hpp \
-	CoinAbcOrderedFactorization1.cpp \
-	CoinAbcOrderedFactorization2.cpp \
-	CoinAbcOrderedFactorization3.cpp \
-	CoinAbcOrderedFactorization4.cpp \
-	CoinAbcOrderedFactorization5.cpp \
-	CoinAbcSmallFactorization1.cpp \
-	CoinAbcSmallFactorization2.cpp \
-	CoinAbcSmallFactorization3.cpp \
-	CoinAbcSmallFactorization4.cpp \
-	CoinAbcSmallFactorization5.cpp
-endif
 
 # if AMD or CHOLMOD is available, then compile ClpCholeskyUfl.cpp
 if COIN_HAS_AMD

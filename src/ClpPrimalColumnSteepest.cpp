@@ -3,10 +3,6 @@
 // This code is licensed under the terms of the Eclipse Public License (EPL).
 
 #include "CoinPragma.hpp"
-#if ABOCA_LITE
-// 1 is not owner of abcState_
-#define ABCSTATE_LITE 1
-#endif
 //#define FAKE_CILK
 
 #include "ClpSimplex.hpp"
@@ -19,10 +15,6 @@
 #include "ClpPackedMatrix.hpp"
 #include "CoinHelperFunctions.hpp"
 #include <stdio.h>
-#if ABOCA_LITE
-#undef ALT_UPDATE_WEIGHTS
-#define ALT_UPDATE_WEIGHTS 2
-#endif
 #if ALT_UPDATE_WEIGHTS == 1
 extern CoinIndexedVector *altVector[3];
 #endif
@@ -645,13 +637,7 @@ int ClpPrimalColumnSteepest::pivotColumn(CoinIndexedVector *updates,
         break;
     }
   } else {
-#if ABOCA_LITE
-    int numberThreads = std::max(abcState(), 1);
-#define ABOCA_LITE_MAX ABOCA_LITE
-#else
     const int numberThreads = 1;
-#define ABOCA_LITE_MAX 1
-#endif
     if (0) {
       int iSequence;
       double value;
@@ -665,8 +651,8 @@ int ClpPrimalColumnSteepest::pivotColumn(CoinIndexedVector *updates,
       weight = weights_[iSequence];
       debug1(iSequence, value, weight);
     }
-    clpTempInfo info[ABOCA_LITE_MAX];
-    int start_lite[2 * ABOCA_LITE_MAX];
+    clpTempInfo info[1];
+    int start_lite[2];
     int chunk0 = (number + numberThreads - 1) / numberThreads;
     int n0 = 0;
     for (int i = 0; i < numberThreads; i++) {
@@ -3188,11 +3174,6 @@ void ClpPrimalColumnSteepest::saveWeights(ClpSimplex *model, int mode)
   if (mode == 1) {
     if (!model_->numberIterations())
       pivotSequence_ = -1;
-#if ABOCA_LITE
-    int numberThreads = abcState();
-    if (numberThreads && mode_ > 1)
-      mode_ = 0; // force exact
-#endif
     if (weights_) {
       // Check if size has changed
       if (infeasible_->capacity() == numberRows + numberColumns && alternateWeights_->capacity() == numberRows + model_->factorization()->maximumPivots()) {

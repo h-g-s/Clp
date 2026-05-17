@@ -12,9 +12,6 @@
 
 #include "CoinHelperFunctions.hpp"
 #include "ClpConfig.h"
-#ifdef CLP_HAS_ABC
-#include "CoinAbcCommon.hpp"
-#endif
 
 #include "CoinPackedMatrix.hpp"
 #include "ClpPackedMatrix.hpp"
@@ -1592,59 +1589,7 @@ void ClpPresolve::postsolve(CoinPostsolveMatrix &prob)
 #endif
 #undef PRESOLVE_DEBUG
 
-#if 0 && PRESOLVE_DEBUG
-     for (i = 0; i < ncols0; i++) {
-          if (!cdone[i]) {
-               printf("!cdone[%d]\n", i);
-               abort();
-          }
-     }
 
-     for (i = 0; i < nrows0; i++) {
-          if (!rdone[i]) {
-               printf("!rdone[%d]\n", i);
-               abort();
-          }
-     }
-
-
-     for (i = 0; i < ncols0; i++) {
-          if (sol[i] < -1e10 || sol[i] > 1e10)
-               printf("!!!%d %g\n", i, sol[i]);
-
-     }
-
-#endif
-
-#if 0 && PRESOLVE_DEBUG
-     // debug check:  make sure we ended up with same original matrix
-     {
-          int identical = 1;
-
-          for (int i = 0; i < ncols0; i++) {
-               PRESOLVEASSERT(hincol[i] == &prob->mcstrt0[i+1] - &prob->mcstrt0[i]);
-               CoinBigIndex kcs0 = &prob->mcstrt0[i];
-               CoinBigIndex kcs = mcstrt[i];
-               int n = hincol[i];
-               for (int k = 0; k < n; k++) {
-                    CoinBigIndex k1 = presolve_find_row1(&prob->hrow0[kcs0+k], kcs, kcs + n, hrow);
-
-                    if (k1 == kcs + n) {
-                         printf("ROW %d NOT IN COL %d\n", &prob->hrow0[kcs0+k], i);
-                         abort();
-                    }
-
-                    if (colels[k1] != &prob->dels0[kcs0+k])
-                         printf("BAD COLEL[%d %d %d]:  %g\n",
-                                k1, i, &prob->hrow0[kcs0+k], colels[k1] - &prob->dels0[kcs0+k]);
-
-                    if (kcs0 + k != k1)
-                         identical = 0;
-               }
-          }
-          printf("identical? %d\n", identical);
-     }
-#endif
 }
 
 static inline double getTolerance(const ClpSimplex *si, ClpDblParam key)
@@ -2113,9 +2058,6 @@ CoinPostsolveMatrix* create_CoinPostsolveMatrix(ClpSimplex *si,
     ClpDisjointCopyN(m->getElements(), nelemsr, cpm->colels_);
   }
 
-#if 0 && PRESOLVE_DEBUG
-     presolve_check_costs(model, &colcopy);
-#endif
 
   // This determines the size of the data structure that contains
   // the matrix being postsolved.  Links are taken from the free_list
