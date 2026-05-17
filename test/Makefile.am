@@ -34,7 +34,7 @@ noinst_PROGRAMS += testRacingLP
 
 testRacingLP_SOURCES = test_racing_lp.cpp
 
-testRacingLP_LDADD = ../src/libClp.la ../src/OsiClp/libOsiClp.la \
+testRacingLP_LDADD = ../src/libClp.la ../src/Osi/libOsi.la ../src/OsiClp/libOsiClp.la \
 	$(CLPLIB_LFLAGS) $(OSICLPLIB_LFLAGS)
 
 testRacingLP_CPPFLAGS = -I$(srcdir)/../src -I$(srcdir)/../src/OsiClp $(OSICLPLIB_CFLAGS)
