@@ -96,16 +96,11 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-noinst_PROGRAMS = $(am__EXEEXT_1) testRacingLP$(EXEEXT)
-
-########################################################################
-#                         unitTest for OsiClp                          #
-########################################################################
-@COIN_HAS_OSITESTS_TRUE@am__append_1 = osiUnitTest
-@COIN_HAS_SAMPLE_TRUE@am__append_2 = -dirSample `$(CYGPATH_W) $(SAMPLE_DATA)`
-@COIN_HAS_SAMPLE_TRUE@am__append_3 = -mpsDir=`$(CYGPATH_W) $(SAMPLE_DATA)`
-@COIN_HAS_NETLIB_TRUE@am__append_4 = -dirNetlib `$(CYGPATH_W) $(NETLIB_DATA)` -netlib
-@COIN_HAS_NETLIB_TRUE@am__append_5 = -netlibDir=`$(CYGPATH_W) $(NETLIB_DATA)` -testOsiSolverInterface
+noinst_PROGRAMS = osiUnitTest$(EXEEXT) testRacingLP$(EXEEXT)
+@COIN_HAS_SAMPLE_TRUE@am__append_1 = -dirSample `$(CYGPATH_W) $(SAMPLE_DATA)`
+@COIN_HAS_SAMPLE_TRUE@am__append_2 = -mpsDir=`$(CYGPATH_W) $(SAMPLE_DATA)`
+@COIN_HAS_NETLIB_TRUE@am__append_3 = -dirNetlib `$(CYGPATH_W) $(NETLIB_DATA)` -netlib
+@COIN_HAS_NETLIB_TRUE@am__append_4 = -netlibDir=`$(CYGPATH_W) $(NETLIB_DATA)` -testOsiSolverInterface
 subdir = test
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_clp_aboca.m4 \
@@ -119,18 +114,14 @@ CONFIG_HEADER = $(top_builddir)/src/config.h \
 	$(top_builddir)/src/OsiClp/config_osiclp.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-@COIN_HAS_OSITESTS_TRUE@am__EXEEXT_1 = osiUnitTest$(EXEEXT)
 PROGRAMS = $(noinst_PROGRAMS)
-@COIN_HAS_OSITESTS_TRUE@am_osiUnitTest_OBJECTS =  \
-@COIN_HAS_OSITESTS_TRUE@	osiUnitTest-osiUnitTest.$(OBJEXT) \
-@COIN_HAS_OSITESTS_TRUE@	osiUnitTest-OsiClpSolverInterfaceTest.$(OBJEXT)
+am_osiUnitTest_OBJECTS = osiUnitTest-osiUnitTest.$(OBJEXT) \
+	osiUnitTest-OsiClpSolverInterfaceTest.$(OBJEXT)
 osiUnitTest_OBJECTS = $(am_osiUnitTest_OBJECTS)
 am__DEPENDENCIES_1 =
-@COIN_HAS_OSITESTS_TRUE@osiUnitTest_DEPENDENCIES = ../src/libClp.la \
-@COIN_HAS_OSITESTS_TRUE@	../src/OsiClp/libOsiClp.la \
-@COIN_HAS_OSITESTS_TRUE@	$(am__DEPENDENCIES_1) \
-@COIN_HAS_OSITESTS_TRUE@	$(am__DEPENDENCIES_1) \
-@COIN_HAS_OSITESTS_TRUE@	$(am__DEPENDENCIES_1)
+osiUnitTest_DEPENDENCIES = ../src/libClp.la ../src/OsiClp/libOsiClp.la \
+	../src/OsiCommonTest/libOsiCommonTest.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -280,6 +271,16 @@ OSICLPUNITTEST_CFLAGS_NOPC = @OSICLPUNITTEST_CFLAGS_NOPC@
 OSICLPUNITTEST_LFLAGS = @OSICLPUNITTEST_LFLAGS@
 OSICLPUNITTEST_LFLAGS_NOPC = @OSICLPUNITTEST_LFLAGS_NOPC@
 OSICLPUNITTEST_PCFILES = @OSICLPUNITTEST_PCFILES@
+OSICOMMONTESTLIB_CFLAGS = @OSICOMMONTESTLIB_CFLAGS@
+OSICOMMONTESTLIB_CFLAGS_NOPC = @OSICOMMONTESTLIB_CFLAGS_NOPC@
+OSICOMMONTESTLIB_LFLAGS = @OSICOMMONTESTLIB_LFLAGS@
+OSICOMMONTESTLIB_LFLAGS_NOPC = @OSICOMMONTESTLIB_LFLAGS_NOPC@
+OSICOMMONTESTLIB_PCFILES = @OSICOMMONTESTLIB_PCFILES@
+OSILIB_CFLAGS = @OSILIB_CFLAGS@
+OSILIB_CFLAGS_NOPC = @OSILIB_CFLAGS_NOPC@
+OSILIB_LFLAGS = @OSILIB_LFLAGS@
+OSILIB_LFLAGS_NOPC = @OSILIB_LFLAGS_NOPC@
+OSILIB_PCFILES = @OSILIB_PCFILES@
 OTOOL = @OTOOL@
 OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
@@ -363,12 +364,16 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_LDFLAGS = $(LT_LDFLAGS)
-@COIN_HAS_OSITESTS_TRUE@osiUnitTest_SOURCES = osiUnitTest.cpp OsiClpSolverInterfaceTest.cpp
-@COIN_HAS_OSITESTS_TRUE@osiUnitTest_LDADD = ../src/libClp.la ../src/OsiClp/libOsiClp.la \
-@COIN_HAS_OSITESTS_TRUE@	$(CLPLIB_LFLAGS) $(OSICLPLIB_LFLAGS) $(OSICLPUNITTEST_LFLAGS)
+osiUnitTest_SOURCES = osiUnitTest.cpp OsiClpSolverInterfaceTest.cpp
+osiUnitTest_LDADD = ../src/libClp.la ../src/OsiClp/libOsiClp.la \
+	../src/OsiCommonTest/libOsiCommonTest.la \
+	$(CLPLIB_LFLAGS) $(OSICLPLIB_LFLAGS)
 
-@COIN_HAS_OSITESTS_TRUE@osiUnitTest_CPPFLAGS = -I$(srcdir)/../src -I$(srcdir)/../src/OsiClp $(OSICLPUNITTEST_CFLAGS)
-@COIN_HAS_OSITESTS_TRUE@testdepend = osiUnitTest$(EXEEXT)
+osiUnitTest_CPPFLAGS = -I$(srcdir)/../src -I$(srcdir)/../src/Osi \
+	-I$(srcdir)/../src/OsiClp -I$(srcdir)/../src/OsiCommonTest \
+	$(CLPLIB_CFLAGS) $(OSICLPLIB_CFLAGS)
+
+testdepend = osiUnitTest$(EXEEXT)
 testRacingLP_SOURCES = test_racing_lp.cpp
 testRacingLP_LDADD = ../src/libClp.la ../src/OsiClp/libOsiClp.la \
 	$(CLPLIB_LFLAGS) $(OSICLPLIB_LFLAGS)
@@ -378,8 +383,8 @@ testRacingLP_CPPFLAGS = -I$(srcdir)/../src -I$(srcdir)/../src/OsiClp $(OSICLPLIB
 ########################################################################
 #                         unitTest for Clp                             #
 ########################################################################
-unittestflags = $(am__append_2) -unitTest $(am__append_4)
-osiunittestflags = $(am__append_3) $(am__append_5)
+unittestflags = $(am__append_1) -unitTest $(am__append_3)
+osiunittestflags = $(am__append_2) $(am__append_4)
 
 ########################################################################
 #                          Cleaning stuff                              #

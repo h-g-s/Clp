@@ -55,12 +55,10 @@ AC_CHECK_HEADERS([immintrin.h intrin.h arm_neon.h fmaintrin.h],[break],[])
 #                              COIN-OR components                           #
 #############################################################################
 
-AC_COIN_CHK_PKG(CoinUtils,[ClpLib OsiClpUnitTest])
+AC_COIN_CHK_PKG(CoinUtils,[ClpLib OsiClpUnitTest OsiLib OsiCommonTestLib])
 if test $coin_has_coinutils != yes ; then
   AC_MSG_ERROR([Required package CoinUtils not available.])
 fi
-AC_COIN_CHK_PKG(Osi,[OsiClpLib OsiClpUnitTest])
-AC_COIN_CHK_PKG(OsiTests,[OsiClpUnitTest],[osi-unittests])
 AC_COIN_CHK_PKG(Sample,,[coindatasample],[],dataonly)
 AC_COIN_CHK_PKG(Netlib,,[coindatanetlib],[],dataonly)
 
@@ -143,37 +141,36 @@ AC_COIN_EXAMPLE_FILES([examples/g.tiny examples/gparm.tiny])
 #                  Check for doxygen                                        #
 #############################################################################
 
-AC_COIN_DOXYGEN([CoinUtils Osi])
+AC_COIN_DOXYGEN([CoinUtils])
 
 ##############################################################################
 #                   Finishing up by writing all the output                   #
 ##############################################################################
 
 # Finalize libs and cflags.
+AC_COIN_FINALIZE_FLAGS([OsiLib OsiCommonTestLib])
 AC_COIN_FINALIZE_FLAGS([ClpLib OsiClpLib OsiClpUnitTest])
-AC_COIN_CHK_HERE([ClpLib],[OsiClpLib],[clp])
+AC_COIN_CHK_HERE([OsiLib],[OsiCommonTestLib OsiClpLib OsiClpUnitTest],[osi])
+AC_COIN_CHK_HERE([ClpLib],[OsiClpLib OsiClpUnitTest],[clp])
 
 # Here list all the files that configure should create (except for the
 # configuration header file)
 AC_CONFIG_FILES([Makefile
                  examples/Makefile
                  src/Makefile
+                 src/Osi/Makefile
                  src/OsiClp/Makefile
+                 src/OsiCommonTest/Makefile
                  test/Makefile
-                 clp.pc])
-
-if test $coin_has_osi = yes ; then
-  AC_CONFIG_FILES([osi-clp.pc:src/OsiClp/osi-clp.pc.in])
-fi
+                 clp.pc
+                 osi.pc:osi.pc.in
+                 osi-clp.pc:src/OsiClp/osi-clp.pc.in
+                 osi-unittests.pc:osi-unittests.pc.in])
 
 AC_CONFIG_FILES([doxydoc/doxygen.conf])
 
 # Here put the location and name of the configuration header file
-AC_CONFIG_HEADERS([src/config.h src/config_clp.h])
-
-if test $coin_has_osi = yes ; then
-  AC_CONFIG_HEADERS([src/OsiClp/config_osiclp.h])
-fi
+AC_CONFIG_HEADERS([src/config.h src/config_clp.h src/OsiClp/config_osiclp.h])
 
 # Capture git revision for display in solver header
 AC_MSG_CHECKING([git revision])

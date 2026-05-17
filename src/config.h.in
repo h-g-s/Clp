@@ -24,12 +24,6 @@
 /* Define to 1 if Netlib is available. */
 #undef CLP_HAS_NETLIB
 
-/* Define to 1 if Osi is available. */
-#undef CLP_HAS_OSI
-
-/* Define to 1 if OsiTests is available. */
-#undef CLP_HAS_OSITESTS
-
 /* Define to 1 if Sample is available. */
 #undef CLP_HAS_SAMPLE
 
@@ -119,6 +113,12 @@
 
 /* Library Visibility Attribute */
 #undef OSICLPUNITTEST_EXPORT
+
+/* Library Visibility Attribute */
+#undef OSICOMMONTESTLIB_EXPORT
+
+/* Library Visibility Attribute */
+#undef OSILIB_EXPORT
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT

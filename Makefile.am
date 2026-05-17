@@ -10,15 +10,9 @@ include BuildTools/Makemain.inc
 #            Subdirectories and installation of .pc files              #
 ########################################################################
 
-SUBDIRS = src
+SUBDIRS = src src/Osi src/OsiClp src/OsiCommonTest
 
-pkgconfiglib_DATA = clp.pc
-
-# Build OsiClp only if Osi is available.
-if COIN_HAS_OSI
-  SUBDIRS += src/OsiClp
-  pkgconfiglib_DATA += osi-clp.pc
-endif
+pkgconfiglib_DATA = clp.pc osi.pc osi-clp.pc osi-unittests.pc
 
 ########################################################################
 #                           Extra Targets                              #

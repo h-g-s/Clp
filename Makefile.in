@@ -94,10 +94,6 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-
-# Build OsiClp only if Osi is available.
-@COIN_HAS_OSI_TRUE@am__append_1 = src/OsiClp
-@COIN_HAS_OSI_TRUE@am__append_2 = osi-clp.pc
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_clp_aboca.m4 \
@@ -112,8 +108,8 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/src/config.h \
 	$(top_builddir)/src/config_clp.h \
 	$(top_builddir)/src/OsiClp/config_osiclp.h
-CONFIG_CLEAN_FILES = examples/Makefile clp.pc osi-clp.pc \
-	doxydoc/doxygen.conf
+CONFIG_CLEAN_FILES = examples/Makefile clp.pc osi.pc osi-clp.pc \
+	osi-unittests.pc doxydoc/doxygen.conf
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -194,7 +190,7 @@ am__define_uniq_tagged_files = \
   unique=`for i in $$list; do \
     if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
   done | $(am__uniquify_input)`
-DIST_SUBDIRS = src src/OsiClp
+DIST_SUBDIRS = $(SUBDIRS)
 pkgdatadir = $(datadir)/$(PACKAGE_TARNAME)
 pkgincludedir = $(includedir)/coin-or
 ACLOCAL = @ACLOCAL@
@@ -276,6 +272,16 @@ OSICLPUNITTEST_CFLAGS_NOPC = @OSICLPUNITTEST_CFLAGS_NOPC@
 OSICLPUNITTEST_LFLAGS = @OSICLPUNITTEST_LFLAGS@
 OSICLPUNITTEST_LFLAGS_NOPC = @OSICLPUNITTEST_LFLAGS_NOPC@
 OSICLPUNITTEST_PCFILES = @OSICLPUNITTEST_PCFILES@
+OSICOMMONTESTLIB_CFLAGS = @OSICOMMONTESTLIB_CFLAGS@
+OSICOMMONTESTLIB_CFLAGS_NOPC = @OSICOMMONTESTLIB_CFLAGS_NOPC@
+OSICOMMONTESTLIB_LFLAGS = @OSICOMMONTESTLIB_LFLAGS@
+OSICOMMONTESTLIB_LFLAGS_NOPC = @OSICOMMONTESTLIB_LFLAGS_NOPC@
+OSICOMMONTESTLIB_PCFILES = @OSICOMMONTESTLIB_PCFILES@
+OSILIB_CFLAGS = @OSILIB_CFLAGS@
+OSILIB_CFLAGS_NOPC = @OSILIB_CFLAGS_NOPC@
+OSILIB_LFLAGS = @OSILIB_LFLAGS@
+OSILIB_LFLAGS_NOPC = @OSILIB_LFLAGS_NOPC@
+OSILIB_PCFILES = @OSILIB_PCFILES@
 OTOOL = @OTOOL@
 OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
@@ -375,8 +381,8 @@ DOXYTAG_EDIT = sed -e 's|@baredocdir_nosub@|$(datarootdir)/doc|g'
 ########################################################################
 #            Subdirectories and installation of .pc files              #
 ########################################################################
-SUBDIRS = src $(am__append_1)
-pkgconfiglib_DATA = clp.pc $(am__append_2)
+SUBDIRS = src src/Osi src/OsiClp src/OsiCommonTest
+pkgconfiglib_DATA = clp.pc osi.pc osi-clp.pc osi-unittests.pc
 all: all-recursive
 
 .SUFFIXES:
@@ -418,7 +424,11 @@ examples/Makefile: $(top_builddir)/config.status $(top_srcdir)/examples/Makefile
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 clp.pc: $(top_builddir)/config.status $(srcdir)/clp.pc.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
+osi.pc: $(top_builddir)/config.status $(srcdir)/osi.pc.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
 osi-clp.pc: $(top_builddir)/config.status $(top_srcdir)/src/OsiClp/osi-clp.pc.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+osi-unittests.pc: $(top_builddir)/config.status $(srcdir)/osi-unittests.pc.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 doxydoc/doxygen.conf: $(top_builddir)/config.status $(top_srcdir)/doxydoc/doxygen.conf.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@

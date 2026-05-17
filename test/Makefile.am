@@ -12,19 +12,19 @@ AM_LDFLAGS = $(LT_LDFLAGS)
 #                         unitTest for OsiClp                          #
 ########################################################################
 
-if COIN_HAS_OSITESTS
-
 noinst_PROGRAMS += osiUnitTest
 
 osiUnitTest_SOURCES = osiUnitTest.cpp OsiClpSolverInterfaceTest.cpp
 
 osiUnitTest_LDADD = ../src/libClp.la ../src/OsiClp/libOsiClp.la \
-	$(CLPLIB_LFLAGS) $(OSICLPLIB_LFLAGS) $(OSICLPUNITTEST_LFLAGS)
+	../src/OsiCommonTest/libOsiCommonTest.la \
+	$(CLPLIB_LFLAGS) $(OSICLPLIB_LFLAGS)
 
-osiUnitTest_CPPFLAGS = -I$(srcdir)/../src -I$(srcdir)/../src/OsiClp $(OSICLPUNITTEST_CFLAGS)
+osiUnitTest_CPPFLAGS = -I$(srcdir)/../src -I$(srcdir)/../src/Osi \
+	-I$(srcdir)/../src/OsiClp -I$(srcdir)/../src/OsiCommonTest \
+	$(CLPLIB_CFLAGS) $(OSICLPLIB_CFLAGS)
 
 testdepend = osiUnitTest$(EXEEXT)
-endif
 
 ########################################################################
 #                      LP Racing unit test                             #

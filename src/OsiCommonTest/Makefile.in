@@ -14,12 +14,6 @@
 
 @SET_MAKE@
 
-# Copyright (C) 2006 International Business Machines and others.
-# All Rights Reserved.
-# This file is distributed under the Eclipse Public License.
-#
-# Author:  Andreas Waechter           IBM    2006-04-13
-
 
 VPATH = @srcdir@
 am__is_gnu_make = { \
@@ -95,7 +89,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = src/OsiClp
+subdir = src/OsiCommonTest
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_clp_aboca.m4 \
 	$(top_srcdir)/configure.ac
@@ -104,7 +98,8 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 DIST_COMMON = $(srcdir)/Makefile.am $(includecoin_HEADERS)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/src/config.h \
-	$(top_builddir)/src/config_clp.h config_osiclp.h
+	$(top_builddir)/src/config_clp.h \
+	$(top_builddir)/src/OsiClp/config_osiclp.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
@@ -136,9 +131,12 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(includecoindir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-libOsiClp_la_DEPENDENCIES = $(am__DEPENDENCIES_1) ../libClp.la
-am_libOsiClp_la_OBJECTS = OsiClpSolverInterface.lo
-libOsiClp_la_OBJECTS = $(am_libOsiClp_la_OBJECTS)
+libOsiCommonTest_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	../Osi/libOsi.la
+am_libOsiCommonTest_la_OBJECTS = OsiColCutTest.lo OsiCutsTest.lo \
+	OsiRowCutDebuggerTest.lo OsiRowCutTest.lo OsiSimplexAPITest.lo \
+	OsiNetlibTest.lo OsiUnitTestUtils.lo OsiSolverInterfaceTest.lo
+libOsiCommonTest_la_OBJECTS = $(am_libOsiCommonTest_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -155,10 +153,16 @@ AM_V_at = $(am__v_at_@AM_V@)
 am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 am__v_at_1 = 
-DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/src
+DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/src -I$(top_builddir)/src/OsiClp
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/OsiClpSolverInterface.Plo
+am__depfiles_remade = ./$(DEPDIR)/OsiColCutTest.Plo \
+	./$(DEPDIR)/OsiCutsTest.Plo ./$(DEPDIR)/OsiNetlibTest.Plo \
+	./$(DEPDIR)/OsiRowCutDebuggerTest.Plo \
+	./$(DEPDIR)/OsiRowCutTest.Plo \
+	./$(DEPDIR)/OsiSimplexAPITest.Plo \
+	./$(DEPDIR)/OsiSolverInterfaceTest.Plo \
+	./$(DEPDIR)/OsiUnitTestUtils.Plo
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -196,15 +200,14 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libOsiClp_la_SOURCES)
+SOURCES = $(libOsiCommonTest_la_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
 HEADERS = $(includecoin_HEADERS)
-am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP) \
-	config_osiclp.h.in
+am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
 # and print each of them once, without duplicates.  Input order is
 # *not* preserved.
@@ -409,34 +412,31 @@ COIN_HAS_LATEX = @COIN_HAS_LATEX_TRUE@TRUE
 DOXYTAG_EDIT = sed -e 's|@baredocdir_nosub@|$(datarootdir)/doc|g'
 
 ########################################################################
-#                             libOsiClp                                #
+#                    Common Test library for Osi                       #
 ########################################################################
+lib_LTLIBRARIES = libOsiCommonTest.la
+libOsiCommonTest_la_SOURCES = \
+	OsiUnitTests.hpp \
+	OsiUnitTestsConfig.h \
+	OsiColCutTest.cpp \
+	OsiCutsTest.cpp \
+	OsiRowCutDebuggerTest.cpp \
+	OsiRowCutTest.cpp \
+	OsiSimplexAPITest.cpp \
+	OsiNetlibTest.cpp \
+	OsiUnitTestUtils.cpp \
+	OsiSolverInterfaceTest.cpp
 
-# Name of the library compiled in this directory.
-lib_LTLIBRARIES = libOsiClp.la
-
-# List all source files for this library, including headers
-libOsiClp_la_SOURCES = OsiClpSolverInterface.cpp OsiClpSolverInterface.hpp
-
-# List all additionally required libraries
-libOsiClp_la_LIBADD = $(OSICLPLIB_LFLAGS) ../libClp.la
-
-# This is for libtool
+libOsiCommonTest_la_LIBADD = $(OSICOMMONTESTLIB_LFLAGS) ../Osi/libOsi.la
 AM_LDFLAGS = $(LT_LDFLAGS)
-
-# Here list all include flags, relative to this "srcdir" directory.
-AM_CPPFLAGS = -I$(srcdir)/.. $(OSICLPLIB_CFLAGS)
+AM_CPPFLAGS = -I$(srcdir)/../Osi $(OSICOMMONTESTLIB_CFLAGS)
 
 ########################################################################
 #                Headers that need to be installed                     #
 ########################################################################
-
-# Here list all the header files that are required by a user of the library,
-# and that therefore should be installed in 'include/coin-or'
 includecoindir = $(pkgincludedir)
-includecoin_HEADERS = OsiClpSolverInterface.hpp
-all: config_osiclp.h
-	$(MAKE) $(AM_MAKEFLAGS) all-am
+includecoin_HEADERS = OsiUnitTests.hpp OsiUnitTestsConfig.h
+all: all-am
 
 .SUFFIXES:
 .SUFFIXES: .cpp .lo .o .obj
@@ -449,9 +449,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(top_srcdir
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign src/OsiClp/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign src/OsiCommonTest/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign src/OsiClp/Makefile
+	  $(AUTOMAKE) --foreign src/OsiCommonTest/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \
@@ -470,17 +470,6 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
-
-config_osiclp.h: stamp-h3
-	@test -f $@ || rm -f stamp-h3
-	@test -f $@ || $(MAKE) $(AM_MAKEFLAGS) stamp-h3
-
-stamp-h3: $(srcdir)/config_osiclp.h.in $(top_builddir)/config.status
-	$(AM_V_at)rm -f stamp-h3
-	$(AM_V_GEN)cd $(top_builddir) && $(SHELL) ./config.status src/OsiClp/config_osiclp.h
-
-distclean-hdr:
-	-rm -f config_osiclp.h stamp-h3
 
 install-libLTLIBRARIES: $(lib_LTLIBRARIES)
 	@$(NORMAL_INSTALL)
@@ -515,8 +504,8 @@ clean-libLTLIBRARIES:
 	echo rm -f $${locs}; \
 	$(am__rm_f) $${locs}
 
-libOsiClp.la: $(libOsiClp_la_OBJECTS) $(libOsiClp_la_DEPENDENCIES) $(EXTRA_libOsiClp_la_DEPENDENCIES) 
-	$(AM_V_CXXLD)$(CXXLINK) -rpath $(libdir) $(libOsiClp_la_OBJECTS) $(libOsiClp_la_LIBADD) $(LIBS)
+libOsiCommonTest.la: $(libOsiCommonTest_la_OBJECTS) $(libOsiCommonTest_la_DEPENDENCIES) $(EXTRA_libOsiCommonTest_la_DEPENDENCIES) 
+	$(AM_V_CXXLD)$(CXXLINK) -rpath $(libdir) $(libOsiCommonTest_la_OBJECTS) $(libOsiCommonTest_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -524,7 +513,14 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/OsiClpSolverInterface.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/OsiColCutTest.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/OsiCutsTest.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/OsiNetlibTest.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/OsiRowCutDebuggerTest.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/OsiRowCutTest.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/OsiSimplexAPITest.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/OsiSolverInterfaceTest.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/OsiUnitTestUtils.Plo@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -636,7 +632,7 @@ distclean-tags:
 	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
 check-am: all-am
 check: check-am
-all-am: Makefile $(LTLIBRARIES) $(HEADERS) config_osiclp.h
+all-am: Makefile $(LTLIBRARIES) $(HEADERS)
 installdirs:
 	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(includecoindir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
@@ -677,10 +673,17 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-	-rm -f ./$(DEPDIR)/OsiClpSolverInterface.Plo
+	-rm -f ./$(DEPDIR)/OsiColCutTest.Plo
+	-rm -f ./$(DEPDIR)/OsiCutsTest.Plo
+	-rm -f ./$(DEPDIR)/OsiNetlibTest.Plo
+	-rm -f ./$(DEPDIR)/OsiRowCutDebuggerTest.Plo
+	-rm -f ./$(DEPDIR)/OsiRowCutTest.Plo
+	-rm -f ./$(DEPDIR)/OsiSimplexAPITest.Plo
+	-rm -f ./$(DEPDIR)/OsiSolverInterfaceTest.Plo
+	-rm -f ./$(DEPDIR)/OsiUnitTestUtils.Plo
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
-	distclean-hdr distclean-tags
+	distclean-tags
 
 dvi: dvi-am
 
@@ -700,7 +703,7 @@ install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am: install-exec-local install-libLTLIBRARIES
+install-exec-am: install-libLTLIBRARIES
 
 install-html: install-html-am
 
@@ -723,7 +726,14 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -f ./$(DEPDIR)/OsiClpSolverInterface.Plo
+	-rm -f ./$(DEPDIR)/OsiColCutTest.Plo
+	-rm -f ./$(DEPDIR)/OsiCutsTest.Plo
+	-rm -f ./$(DEPDIR)/OsiNetlibTest.Plo
+	-rm -f ./$(DEPDIR)/OsiRowCutDebuggerTest.Plo
+	-rm -f ./$(DEPDIR)/OsiRowCutTest.Plo
+	-rm -f ./$(DEPDIR)/OsiSimplexAPITest.Plo
+	-rm -f ./$(DEPDIR)/OsiSolverInterfaceTest.Plo
+	-rm -f ./$(DEPDIR)/OsiUnitTestUtils.Plo
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -740,27 +750,25 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-includecoinHEADERS uninstall-libLTLIBRARIES \
-	uninstall-local
+uninstall-am: uninstall-includecoinHEADERS uninstall-libLTLIBRARIES
 
-.MAKE: all install-am install-strip
+.MAKE: install-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am am--depfiles check check-am clean \
 	clean-generic clean-libLTLIBRARIES clean-libtool cscopelist-am \
 	ctags ctags-am distclean distclean-compile distclean-generic \
-	distclean-hdr distclean-libtool distclean-tags dvi dvi-am html \
-	html-am info info-am install install-am install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-exec-local install-html \
-	install-html-am install-includecoinHEADERS install-info \
-	install-info-am install-libLTLIBRARIES install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags tags-am uninstall uninstall-am \
-	uninstall-includecoinHEADERS uninstall-libLTLIBRARIES \
-	uninstall-local
+	distclean-libtool distclean-tags dvi dvi-am html html-am info \
+	info-am install install-am install-data install-data-am \
+	install-dvi install-dvi-am install-exec install-exec-am \
+	install-html install-html-am install-includecoinHEADERS \
+	install-info install-info-am install-libLTLIBRARIES \
+	install-man install-pdf install-pdf-am install-ps \
+	install-ps-am install-strip installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
+	uninstall-am uninstall-includecoinHEADERS \
+	uninstall-libLTLIBRARIES
 
 .PRECIOUS: Makefile
 
@@ -844,12 +852,6 @@ uninstall-doc:
 .PHONY: install-doc uninstall-doc \
 	doxygen-docs pdf-doxygen-docs clean-doxygen-docs \
 	install-doxygen-docs uninstall-doxygen-docs
-
-install-exec-local:
-	$(install_sh_DATA) config_osiclp.h $(DESTDIR)$(includecoindir)/OsiClpConfig.h
-
-uninstall-local:
-	rm -f $(DESTDIR)$(includecoindir)/OsiClpConfig.h
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
