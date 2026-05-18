@@ -159,16 +159,16 @@ am_libClp_la_OBJECTS = ClpCholeskyBase.lo ClpCholeskyDense.lo \
 	ClpNetworkMatrix.lo ClpNonLinearCost.lo ClpNode.lo \
 	ClpObjective.lo ClpOutput.lo ClpPackedMatrix.lo \
 	ClpParamUtils.lo ClpParam.lo CbcOrClpParam.lo ClpParameters.lo \
-	ClpPlusMinusOneMatrix.lo ClpPredictorCorrector.lo ClpPdco.lo \
-	ClpPdcoBase.lo ClpLsqr.lo ClpPresolve.lo ClpRacingSolver.lo \
-	ClpPrimalColumnDantzig.lo ClpPrimalColumnPivot.lo \
-	ClpPrimalColumnSteepest.lo ClpQuadraticObjective.lo \
-	ClpSimplex.lo ClpSimplexDual.lo ClpSimplexNonlinear.lo \
-	ClpSimplexOther.lo ClpSimplexPrimal.lo ClpSolve.lo Idiot.lo \
-	IdiSolve.lo ClpPESimplex.lo ClpPEPrimalColumnDantzig.lo \
-	ClpPEPrimalColumnSteepest.lo ClpPEDualRowDantzig.lo \
-	ClpPEDualRowSteepest.lo ClpSolver.lo MyEventHandler.lo \
-	MyMessageHandler.lo unitTest.lo $(am__objects_1)
+	ClpPlusMinusOneMatrix.lo ClpPredictorCorrector.lo \
+	ClpPresolve.lo ClpRacingSolver.lo ClpPrimalColumnDantzig.lo \
+	ClpPrimalColumnPivot.lo ClpPrimalColumnSteepest.lo \
+	ClpQuadraticObjective.lo ClpSimplex.lo ClpSimplexDual.lo \
+	ClpSimplexNonlinear.lo ClpSimplexOther.lo ClpSimplexPrimal.lo \
+	ClpSolve.lo Idiot.lo IdiSolve.lo ClpPESimplex.lo \
+	ClpPEPrimalColumnDantzig.lo ClpPEPrimalColumnSteepest.lo \
+	ClpPEDualRowDantzig.lo ClpPEDualRowSteepest.lo ClpSolver.lo \
+	MyEventHandler.lo MyMessageHandler.lo unitTest.lo \
+	$(am__objects_1)
 libClp_la_OBJECTS = $(am_libClp_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -209,10 +209,9 @@ am__depfiles_remade = ./$(DEPDIR)/CbcOrClpParam.Plo \
 	./$(DEPDIR)/ClpGubDynamicMatrix.Plo \
 	./$(DEPDIR)/ClpGubMatrix.Plo \
 	./$(DEPDIR)/ClpHelperFunctions.Plo ./$(DEPDIR)/ClpInterior.Plo \
-	./$(DEPDIR)/ClpLinearObjective.Plo ./$(DEPDIR)/ClpLsqr.Plo \
-	./$(DEPDIR)/ClpMain.Po ./$(DEPDIR)/ClpMatrixBase.Plo \
-	./$(DEPDIR)/ClpMessage.Plo ./$(DEPDIR)/ClpModel.Plo \
-	./$(DEPDIR)/ClpNetworkBasis.Plo \
+	./$(DEPDIR)/ClpLinearObjective.Plo ./$(DEPDIR)/ClpMain.Po \
+	./$(DEPDIR)/ClpMatrixBase.Plo ./$(DEPDIR)/ClpMessage.Plo \
+	./$(DEPDIR)/ClpModel.Plo ./$(DEPDIR)/ClpNetworkBasis.Plo \
 	./$(DEPDIR)/ClpNetworkMatrix.Plo ./$(DEPDIR)/ClpNode.Plo \
 	./$(DEPDIR)/ClpNonLinearCost.Plo ./$(DEPDIR)/ClpObjective.Plo \
 	./$(DEPDIR)/ClpOutput.Plo ./$(DEPDIR)/ClpPEDualRowDantzig.Plo \
@@ -221,8 +220,7 @@ am__depfiles_remade = ./$(DEPDIR)/CbcOrClpParam.Plo \
 	./$(DEPDIR)/ClpPEPrimalColumnSteepest.Plo \
 	./$(DEPDIR)/ClpPESimplex.Plo ./$(DEPDIR)/ClpPackedMatrix.Plo \
 	./$(DEPDIR)/ClpParam.Plo ./$(DEPDIR)/ClpParamUtils.Plo \
-	./$(DEPDIR)/ClpParameters.Plo ./$(DEPDIR)/ClpPdco.Plo \
-	./$(DEPDIR)/ClpPdcoBase.Plo \
+	./$(DEPDIR)/ClpParameters.Plo \
 	./$(DEPDIR)/ClpPlusMinusOneMatrix.Plo \
 	./$(DEPDIR)/ClpPredictorCorrector.Plo \
 	./$(DEPDIR)/ClpPresolve.Plo \
@@ -293,8 +291,8 @@ am__includecoin_HEADERS_DIST = Clp_C_Interface.h ClpCholeskyBase.hpp \
 	ClpModel.hpp ClpModelParameters.hpp ClpNetworkMatrix.hpp \
 	ClpNonLinearCost.hpp ClpNode.hpp ClpObjective.hpp \
 	ClpOutput.hpp ClpPackedMatrix.hpp ClpParamUtils.hpp \
-	ClpPdcoBase.hpp ClpPlusMinusOneMatrix.hpp ClpParameters.hpp \
-	ClpPresolve.hpp ClpRacingSolver.hpp ClpPrimalColumnDantzig.hpp \
+	ClpPlusMinusOneMatrix.hpp ClpParameters.hpp ClpPresolve.hpp \
+	ClpRacingSolver.hpp ClpPrimalColumnDantzig.hpp \
 	ClpPrimalColumnPivot.hpp ClpPrimalColumnSteepest.hpp \
 	ClpQuadraticObjective.hpp ClpSimplex.hpp \
 	ClpSimplexNonlinear.hpp ClpSimplexOther.hpp ClpSimplexDual.hpp \
@@ -546,15 +544,13 @@ libClp_la_SOURCES = ClpConfig.h ClpCholeskyBase.cpp \
 	ClpParameters.hpp ClpModelParameters.hpp \
 	ClpPlusMinusOneMatrix.cpp ClpPlusMinusOneMatrix.hpp \
 	ClpPredictorCorrector.cpp ClpPredictorCorrector.hpp \
-	ClpPdco.cpp ClpPdco.hpp ClpPdcoBase.cpp ClpPdcoBase.hpp \
-	ClpLsqr.cpp ClpLsqr.hpp ClpPresolve.cpp ClpPresolve.hpp \
-	ClpRacingSolver.cpp ClpRacingSolver.hpp \
-	ClpPrimalColumnDantzig.cpp ClpPrimalColumnDantzig.hpp \
-	ClpPrimalColumnPivot.cpp ClpPrimalColumnPivot.hpp \
-	ClpPrimalColumnSteepest.cpp ClpPrimalColumnSteepest.hpp \
-	ClpQuadraticObjective.cpp ClpQuadraticObjective.hpp \
-	ClpSimplex.cpp ClpSimplex.hpp ClpSimplexDual.cpp \
-	ClpSimplexDual.hpp ClpSimplexNonlinear.cpp \
+	ClpPresolve.cpp ClpPresolve.hpp ClpRacingSolver.cpp \
+	ClpRacingSolver.hpp ClpPrimalColumnDantzig.cpp \
+	ClpPrimalColumnDantzig.hpp ClpPrimalColumnPivot.cpp \
+	ClpPrimalColumnPivot.hpp ClpPrimalColumnSteepest.cpp \
+	ClpPrimalColumnSteepest.hpp ClpQuadraticObjective.cpp \
+	ClpQuadraticObjective.hpp ClpSimplex.cpp ClpSimplex.hpp \
+	ClpSimplexDual.cpp ClpSimplexDual.hpp ClpSimplexNonlinear.cpp \
 	ClpSimplexNonlinear.hpp ClpSimplexOther.cpp \
 	ClpSimplexOther.hpp ClpSimplexPrimal.cpp ClpSimplexPrimal.hpp \
 	ClpSolve.cpp ClpSolve.hpp Idiot.cpp Idiot.hpp IdiSolve.cpp \
@@ -603,8 +599,8 @@ includecoin_HEADERS = Clp_C_Interface.h ClpCholeskyBase.hpp \
 	ClpModel.hpp ClpModelParameters.hpp ClpNetworkMatrix.hpp \
 	ClpNonLinearCost.hpp ClpNode.hpp ClpObjective.hpp \
 	ClpOutput.hpp ClpPackedMatrix.hpp ClpParamUtils.hpp \
-	ClpPdcoBase.hpp ClpPlusMinusOneMatrix.hpp ClpParameters.hpp \
-	ClpPresolve.hpp ClpRacingSolver.hpp ClpPrimalColumnDantzig.hpp \
+	ClpPlusMinusOneMatrix.hpp ClpParameters.hpp ClpPresolve.hpp \
+	ClpRacingSolver.hpp ClpPrimalColumnDantzig.hpp \
 	ClpPrimalColumnPivot.hpp ClpPrimalColumnSteepest.hpp \
 	ClpQuadraticObjective.hpp ClpSimplex.hpp \
 	ClpSimplexNonlinear.hpp ClpSimplexOther.hpp ClpSimplexDual.hpp \
@@ -783,7 +779,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ClpHelperFunctions.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ClpInterior.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ClpLinearObjective.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ClpLsqr.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ClpMain.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ClpMatrixBase.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ClpMessage.Plo@am__quote@ # am--include-marker
@@ -803,8 +798,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ClpParam.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ClpParamUtils.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ClpParameters.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ClpPdco.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ClpPdcoBase.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ClpPlusMinusOneMatrix.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ClpPredictorCorrector.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ClpPresolve.Plo@am__quote@ # am--include-marker
@@ -1001,7 +994,6 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/ClpHelperFunctions.Plo
 	-rm -f ./$(DEPDIR)/ClpInterior.Plo
 	-rm -f ./$(DEPDIR)/ClpLinearObjective.Plo
-	-rm -f ./$(DEPDIR)/ClpLsqr.Plo
 	-rm -f ./$(DEPDIR)/ClpMain.Po
 	-rm -f ./$(DEPDIR)/ClpMatrixBase.Plo
 	-rm -f ./$(DEPDIR)/ClpMessage.Plo
@@ -1021,8 +1013,6 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/ClpParam.Plo
 	-rm -f ./$(DEPDIR)/ClpParamUtils.Plo
 	-rm -f ./$(DEPDIR)/ClpParameters.Plo
-	-rm -f ./$(DEPDIR)/ClpPdco.Plo
-	-rm -f ./$(DEPDIR)/ClpPdcoBase.Plo
 	-rm -f ./$(DEPDIR)/ClpPlusMinusOneMatrix.Plo
 	-rm -f ./$(DEPDIR)/ClpPredictorCorrector.Plo
 	-rm -f ./$(DEPDIR)/ClpPresolve.Plo
@@ -1110,7 +1100,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/ClpHelperFunctions.Plo
 	-rm -f ./$(DEPDIR)/ClpInterior.Plo
 	-rm -f ./$(DEPDIR)/ClpLinearObjective.Plo
-	-rm -f ./$(DEPDIR)/ClpLsqr.Plo
 	-rm -f ./$(DEPDIR)/ClpMain.Po
 	-rm -f ./$(DEPDIR)/ClpMatrixBase.Plo
 	-rm -f ./$(DEPDIR)/ClpMessage.Plo
@@ -1130,8 +1119,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/ClpParam.Plo
 	-rm -f ./$(DEPDIR)/ClpParamUtils.Plo
 	-rm -f ./$(DEPDIR)/ClpParameters.Plo
-	-rm -f ./$(DEPDIR)/ClpPdco.Plo
-	-rm -f ./$(DEPDIR)/ClpPdcoBase.Plo
 	-rm -f ./$(DEPDIR)/ClpPlusMinusOneMatrix.Plo
 	-rm -f ./$(DEPDIR)/ClpPredictorCorrector.Plo
 	-rm -f ./$(DEPDIR)/ClpPresolve.Plo

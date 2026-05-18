@@ -55,9 +55,6 @@ libClp_la_SOURCES = \
 	ClpModelParameters.hpp \
 	ClpPlusMinusOneMatrix.cpp ClpPlusMinusOneMatrix.hpp \
 	ClpPredictorCorrector.cpp ClpPredictorCorrector.hpp \
-	ClpPdco.cpp ClpPdco.hpp \
-	ClpPdcoBase.cpp ClpPdcoBase.hpp \
-	ClpLsqr.cpp ClpLsqr.hpp \
 	ClpPresolve.cpp ClpPresolve.hpp \
 	ClpRacingSolver.cpp ClpRacingSolver.hpp \
 	ClpPrimalColumnDantzig.cpp ClpPrimalColumnDantzig.hpp \
@@ -152,7 +149,6 @@ includecoin_HEADERS = \
 	ClpOutput.hpp \
 	ClpPackedMatrix.hpp \
 	ClpParamUtils.hpp \
-	ClpPdcoBase.hpp \
 	ClpPlusMinusOneMatrix.hpp \
 	ClpParameters.hpp \
 	ClpPresolve.hpp \
