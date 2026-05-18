@@ -6540,12 +6540,6 @@ int ClpSimplex::reducedGradient(int phase)
 #if 0 //defined(CLP_HAS_AMD) || defined(CLP_HAS_CHOLMOD)
 #include "ClpCholeskyUfl.hpp"
 #endif
-#if defined(CLP_HAS_MUMPS)
-#include "ClpCholeskyMumps.hpp"
-#endif
-#if TAUCS_BARRIER
-#include "ClpCholeskyTaucs.hpp"
-#endif
 #if PARDISO_BARRIER
 #include "ClpCholeskyPardiso.hpp"
 #endif
@@ -6586,20 +6580,6 @@ int ClpSimplex::barrier(bool crossover, int startFinishOptions)
   } else {
     ClpCholeskyBase *cholesky = new ClpCholeskyBase();
     // not yetClpCholeskyUfl * cholesky = new ClpCholeskyUfl();
-    cholesky->setKKT(true);
-    barrier.setCholesky(cholesky);
-  }
-#elif TAUCS_BARRIER
-  assert(!doKKT);
-  ClpCholeskyTaucs *cholesky = new ClpCholeskyTaucs();
-  barrier.setCholesky(cholesky);
-#elif defined(CLP_HAS_MUMPS)
-  if (!doKKT) {
-    ClpCholeskyMumps *cholesky = new ClpCholeskyMumps();
-    barrier.setCholesky(cholesky);
-  } else {
-    printf("***** Unable to do Mumps with KKT\n");
-    ClpCholeskyBase *cholesky = new ClpCholeskyBase();
     cholesky->setKKT(true);
     barrier.setCholesky(cholesky);
   }

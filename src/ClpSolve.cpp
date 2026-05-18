@@ -44,21 +44,11 @@ int debugInt[24];
 #include "ClpPresolve.hpp"
 #ifndef SLIM_CLP
 #include "Idiot.hpp"
-#ifdef CLP_HAS_WSMP
-#include "ClpCholeskyWssmp.hpp"
-#include "ClpCholeskyWssmpKKT.hpp"
-#endif
 #if defined(UFL_BARRIER) && (defined(CLP_HAS_AMD) || defined(CLP_HAS_CHOLMOD))
 #include "ClpCholeskyUfl.hpp"
 #endif
-#ifdef TAUCS_BARRIER
-#include "ClpCholeskyTaucs.hpp"
-#endif
 #ifdef PARDISO_BARRIER
 #include "ClpCholeskyPardiso.hpp"
-#endif
-#ifdef CLP_HAS_MUMPS
-#include "ClpCholeskyMumps.hpp"
 #endif
 #ifdef COIN_HAS_VOL
 #include "VolVolume.hpp"
@@ -2851,26 +2841,6 @@ int ClpSimplex::initialSolve(ClpSolve &options)
         barrier.setCholesky(cholesky);
       }
       break;
-#ifdef CLP_HAS_WSMP
-    case 2: {
-      if (!doKKT) {
-        ClpCholeskyWssmp *cholesky = new ClpCholeskyWssmp(std::max(100, model2->numberRows() / 10));
-        barrier.setCholesky(cholesky);
-      } else {
-        ClpCholeskyWssmpKKT *cholesky = new ClpCholeskyWssmpKKT(std::max(100, model2->numberRows() / 10));
-        barrier.setCholesky(cholesky);
-      }
-    } break;
-    case 3:
-      if (!doKKT) {
-        ClpCholeskyWssmp *cholesky = new ClpCholeskyWssmp();
-        barrier.setCholesky(cholesky);
-      } else {
-        ClpCholeskyWssmpKKT *cholesky = new ClpCholeskyWssmpKKT(std::max(100, model2->numberRows() / 10));
-        barrier.setCholesky(cholesky);
-      }
-      break;
-#endif
 #if defined(UFL_BARRIER) && (defined(CLP_HAS_AMD) || defined(CLP_HAS_CHOLMOD))
     case 4:
       if (!doKKT) {
@@ -2882,29 +2852,6 @@ int ClpSimplex::initialSolve(ClpSolve &options)
         barrier.setCholesky(cholesky);
       }
       break;
-#endif
-#ifdef TAUCS_BARRIER
-    case 5: {
-      ClpCholeskyTaucs *cholesky = new ClpCholeskyTaucs();
-      barrier.setCholesky(cholesky);
-      assert(!doKKT);
-    } break;
-#endif
-#ifdef CLP_HAS_MUMPS
-    case 6: {
-      if (!doKKT) {
-        int logLevel = 0;
-        if (barrier.logLevel() > 3) {
-          logLevel = (barrier.logLevel() > 4) ? 2 : 1;
-        }
-        ClpCholeskyMumps *cholesky = new ClpCholeskyMumps(-1, logLevel);
-        barrier.setCholesky(cholesky);
-      } else {
-        ClpCholeskyMumps *cholesky = new ClpCholeskyMumps();
-        cholesky->setKKT(true);
-        barrier.setCholesky(cholesky);
-      }
-    } break;
 #endif
 #ifdef PARDISO_BARRIER
     case 7: {

@@ -24,8 +24,7 @@
 extern double debugDouble[10];
 extern int debugInt[24];
 #endif
-#if defined(CLP_HAS_WSMP) || defined(CLP_HAS_AMD) || defined(CLP_HAS_CHOLMOD)\
-   || defined(TAUCS_BARRIER) || defined(CLP_HAS_MUMPS)
+#if defined(CLP_HAS_AMD)
 #define FOREIGN_BARRIER
 #endif
 

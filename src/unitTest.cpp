@@ -69,12 +69,6 @@ static void testingMessage(const char *const msg);
 #if defined(CLP_HAS_AMD) || defined(CLP_HAS_CHOLMOD)
 static int barrierAvailable = 1;
 static std::string nameBarrier = "barrier-UFL";
-#elif CLP_HAS_WSMP
-static int barrierAvailable = 2;
-static std::string nameBarrier = "barrier-WSSMP";
-#elif defined(CLP_HAS_MUMPS)
-static int barrierAvailable = 3;
-static std::string nameBarrier = "barrier-MUMPS";
 #else
 static int barrierAvailable = 0;
 static std::string nameBarrier = "barrier-slow";
@@ -1177,14 +1171,6 @@ int mainTest(int argc, const char *argv[], int algorithm,
 #if defined(CLP_HAS_AMD) || defined(CLP_HAS_CHOLMOD)
           solveOptions.setSpecialOption(4, 4);
           nameAlgorithm = "barrier-UFL";
-#endif
-#ifdef CLP_HAS_WSMP
-          solveOptions.setSpecialOption(4, 2);
-          nameAlgorithm = "barrier-WSSMP";
-#endif
-#ifdef CLP_HAS_MUMPS
-          solveOptions.setSpecialOption(4, 6);
-          nameAlgorithm = "barrier-MUMPS";
 #endif
           method = ClpSolve::useBarrier;
         }

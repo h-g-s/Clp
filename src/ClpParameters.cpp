@@ -1072,28 +1072,15 @@ void ClpParameters::addClpKwdParams() {
       "another source.  See Makefile.locations for some possibilities.");
   parameters_[ClpParam::CHOLESKY]->appendKwd("native");
   parameters_[ClpParam::CHOLESKY]->appendKwd("dense");
-#ifdef CLP_HAS_WSMP
-  parameters_[ClpParam::CHOLESKY]->appendKwd("fudge!Long");
-  parameters_[ClpParam::CHOLESKY]->appendKwd("wssmp");
-#else
   parameters_[ClpParam::CHOLESKY]->appendKwd("fudge!Long_dummy");
   parameters_[ClpParam::CHOLESKY]->appendKwd("wssmp_dummy");
-#endif
 #if defined(CLP_HAS_AMD) || defined(CLP_HAS_CHOLMOD)
   parameters_[ClpParam::CHOLESKY]->appendKwd("Uni!versityOfFlorida");
 #else
   parameters_[ClpParam::CHOLESKY]->appendKwd("Uni!versityOfFlorida_dummy");
 #endif
-#ifdef TAUCS_BARRIER
-  parameters_[ClpParam::CHOLESKY]->appendKwd("Taucs");
-#else
   parameters_[ClpParam::CHOLESKY]->appendKwd("Taucs_dummy");
-#endif
-#ifdef CLP_HAS_MUMPS
-  parameters_[ClpParam::CHOLESKY]->appendKwd("Mumps");
-#else
   parameters_[ClpParam::CHOLESKY]->appendKwd("Mumps_dummy");
-#endif
 #ifdef PARDISO_BARRIER
   parameters_[ClpParam::CHOLESKY]->appendKwd("Pardiso");
 #else

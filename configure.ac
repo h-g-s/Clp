@@ -67,50 +67,14 @@ AC_COIN_CHK_PKG(Netlib,,[coindatanetlib],[],dataonly)
 #                        Third party linear solvers                         #
 #############################################################################
 
-# AMD and CHOLMOD from UFL. Glpk is an alternative source for amd. CHOLMOD
-# doc'n claims it requires METIS, but apparently that's not necessary for the
-# version distributed with Fedora.
+# AMD (Approximate Minimum Degree ordering) from SuiteSparse — BSD 3-clause license.
+# Used by ClpCholeskyUfl for the barrier (interior-point) LP solver.
 
 # amd.h
 AC_COIN_CHK_LIBHDR(AMD,[ClpLib],[-lamd],[-I/usr/include/suitesparse],[],
   [[double Control[AMD_CONTROL];
    amd_defaults(Control);]],
   [#include "amd.h"])
-
-# CHOLMOD from UFL
-# Requires AMD, but apparently not for a link check with dynamic libraries.
-# cholmod.h
-AC_COIN_CHK_LIBHDR(CHOLMOD,[ClpLib],[-lcholmod],[-I/usr/include/suitesparse],[],
-  [cholmod_start((cholmod_common*)0);],
-  [#include "cholmod.h"])
-
-# MUMPS. Check first for ThirdParty/MUMPS, on the assumption that if the user
-# bothered to build it, we should use it. If it's not present, try for a
-# system installation. If we find it, define CLP_HAS_MUMPS for export to code
-# using clp.
-AC_COIN_CHK_PKG(MUMPS,[ClpLib],[coinmumps])
-if test $coin_has_mumps = no ; then
-  AC_COIN_CHK_LIBHDR(MUMPS,[ClpLib],[-ldmumps],[-I/usr/include/MUMPS],[],
-    [dmumps_c((DMUMPS_STRUC_C*)0)],
-    [#include "dmumps_c.h"])
-fi
-
-# WSMP (Watson Sparse Matrix Package from IBM T.J. Watson)
-AC_ARG_WITH([wsmp],
-            AS_HELP_STRING([--with-wsmp],[specify WSMP library]),
-            [have_wsmp=yes; wsmp_lflags=$withval],
-            [have_wsmp=no])
-
-if test "$have_wsmp" = "yes"; then
-  AC_COIN_TRY_LINK([wssmp],[$wsmp_lflags],[],
-    [AC_COIN_DEFINENAMEMANGLING([WSMP],[$wssmp_namemangling])
-     CLPLIB_LFLAGS="$wsmp_lflags $CLPLIB_LFLAGS"
-     AC_DEFINE(CLP_HAS_WSMP,1,[Define to 1 if WSMP is available])
-    ],
-    [AC_MSG_ERROR([Symbol wssmp not found with WSMP flags $wsmp_lflags.])])
-fi
-
-AM_CONDITIONAL([COIN_HAS_WSMP],[test $have_wsmp = yes])
 
 #############################################################################
 #                             Other dependencies                            #

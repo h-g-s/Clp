@@ -6,29 +6,17 @@
 /* Git hash at configure time */
 #undef CLP_GIT_HASH
 
-/* Define to 1, 2, 3, or 4 if Aboca should be built. */
-#undef CLP_HAS_ABC
-
 /* Define to 1 if the AMD package is available */
 #undef CLP_HAS_AMD
 
-/* Define to 1 if the CHOLMOD package is available */
-#undef CLP_HAS_CHOLMOD
-
 /* Define to 1 if CoinUtils is available. */
 #undef CLP_HAS_COINUTILS
-
-/* Define to 1 if the MUMPS package is available */
-#undef CLP_HAS_MUMPS
 
 /* Define to 1 if Netlib is available. */
 #undef CLP_HAS_NETLIB
 
 /* Define to 1 if Sample is available. */
 #undef CLP_HAS_SAMPLE
-
-/* Define to 1 if WSMP is available */
-#undef CLP_HAS_WSMP
 
 /* Version number of project */
 #undef CLP_VERSION
@@ -142,10 +130,3 @@
    required in a freestanding environment). This macro is provided for
    backward compatibility; new code need not use it. */
 #undef STDC_HEADERS
-
-/* Define to a macro mangling the given C identifier (in lower and upper
-   case). */
-#undef WSMP_FUNC
-
-/* As WSMP_FUNC, but for C identifiers containing underscores. */
-#undef WSMP_FUNC_

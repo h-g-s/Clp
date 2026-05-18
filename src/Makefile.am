@@ -72,7 +72,6 @@ libClp_la_SOURCES = \
 	ClpSolve.cpp ClpSolve.hpp \
 	Idiot.cpp Idiot.hpp \
 	IdiSolve.cpp \
-	ClpCholeskyPardiso.cpp ClpCholeskyPardiso.hpp \
 	ClpPESimplex.cpp ClpPESimplex.hpp \
 	ClpPEPrimalColumnDantzig.cpp ClpPEPrimalColumnDantzig.hpp \
  	ClpPEPrimalColumnSteepest.cpp ClpPEPrimalColumnSteepest.hpp \
@@ -84,22 +83,9 @@ libClp_la_SOURCES = \
 	unitTest.cpp
 
 
-# if AMD or CHOLMOD is available, then compile ClpCholeskyUfl.cpp
+# AMD (BSD 3-clause) for barrier Cholesky ordering
 if COIN_HAS_AMD
 libClp_la_SOURCES += ClpCholeskyUfl.cpp ClpCholeskyUfl.hpp
-else
-if COIN_HAS_CHOLMOD
-libClp_la_SOURCES += ClpCholeskyUfl.cpp ClpCholeskyUfl.hpp
-else
-endif
-endif
-
-if COIN_HAS_MUMPS
-libClp_la_SOURCES += ClpCholeskyMumps.cpp ClpCholeskyMumps.hpp
-endif
-
-if COIN_HAS_WSMP
-libClp_la_SOURCES += ClpCholeskyWssmp.cpp ClpCholeskyWssmp.hpp ClpCholeskyWssmpKKT.cpp ClpCholeskyWssmpKKT.hpp
 endif
 
 # List all additionally required libraries
@@ -184,7 +170,6 @@ includecoin_HEADERS = \
 	ClpParam.hpp \
 	ClpParameters.hpp \
 	Idiot.hpp \
-	ClpCholeskyPardiso.hpp \
 	ClpPESimplex.hpp \
 	ClpPEPrimalColumnDantzig.hpp \
 	ClpPEPrimalColumnSteepest.hpp \
@@ -193,27 +178,10 @@ includecoin_HEADERS = \
 	CbcOrClpParam.hpp \
 	CbcOrClpParam.cpp 
 
-if COIN_HAS_ABC
-includecoin_HEADERS += AbcSimplex.hpp CoinAbcCommon.hpp AbcCommon.hpp AbcNonLinearCost.hpp
-endif
 
-
-# if AMD or CHOLMOD is available, then install ClpCholeskyUfl.hpp (for advanced users)
+# AMD barrier Cholesky header
 if COIN_HAS_AMD
 includecoin_HEADERS += ClpCholeskyUfl.hpp
-else
-if COIN_HAS_CHOLMOD
-includecoin_HEADERS += ClpCholeskyUfl.hpp
-else
-endif
-endif
-
-if COIN_HAS_MUMPS
-includecoin_HEADERS += ClpCholeskyMumps.hpp
-endif
-
-if COIN_HAS_WSMP
-includecoin_HEADERS += ClpCholeskyWssmp.hpp ClpCholeskyWssmpKKT.hpp
 endif
 
 # needed by Cbc

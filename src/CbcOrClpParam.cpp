@@ -40,11 +40,6 @@ static char coin_prompt[] = "Clp:";
 #endif
 #endif
 
-#if defined(CLP_HAS_WSMP) && !defined(USE_EKKWSSMP)
-#ifndef CBC_THREAD
-#define CBC_THREAD
-#endif
-#endif
 
 
 static bool doPrinting = true;
@@ -1769,28 +1764,15 @@ have more rounds of cuts - see passC!uts and passT!ree.");
 
     p.append("dense");
     //#ifdef FOREIGN_BARRIER
-#ifdef CLP_HAS_WSMP
-    p.append("fudge!Long");
-    p.append("wssmp");
-#else
     p.append("fudge!Long_dummy");
     p.append("wssmp_dummy");
-#endif
 #if defined(CLP_HAS_AMD) || defined(CLP_HAS_CHOLMOD)
     p.append("Uni!versityOfFlorida");
 #else
     p.append("Uni!versityOfFlorida_dummy");
 #endif
-#ifdef TAUCS_BARRIER
-    p.append("Taucs");
-#else
     p.append("Taucs_dummy");
-#endif
-#ifdef CLP_HAS_MUMPS
-    p.append("Mumps");
-#else
     p.append("Mumps_dummy");
-#endif
 #ifdef PARDISO_BARRIER
     p.append("Pardiso");
 #else
